@@ -1,0 +1,17 @@
+{
+  "name": "DIM Wishlist Builder",
+  "description": "Build a large DIM Wishlist.",
+  "version": "1.0",
+  "manifest_version": 3,
+  "content_scripts": [
+    {
+      "matches": [
+        "http://d2gunsmith.com/*",
+        "https://d2gunsmith.com/*"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ]
+}
