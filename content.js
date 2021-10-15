@@ -6,12 +6,18 @@ function copyToTextarea() {
     const errorSpan = document.getElementById("wishlistErrors")
     const text = wishlistText.value;
     const textarea = document.getElementById("wishlistTextarea");
+
     if (isInWishlist(text, textarea.value)) {
         errorSpan.style.display = "block";
         errorSpan.innerText = "This item already exists in wishlist."
     }
     else {
-        textarea.value += text + "\n";
+        const fullText = textarea.value + text + "\n";
+        textarea.value = fullText;
+        chrome.storage.local.set({"wishlistText": fullText}, () => {
+            console.log("Value is set to " + fullText)
+        });
+
         errorSpan.style.display = "none";
         errorSpan.innerText = "";
     }
@@ -19,7 +25,9 @@ function copyToTextarea() {
 
 async function copyWishlistToClipboard() {
     const wishlistText = document.getElementById("wishlistTextarea").value;
-
+    const copyButton = document.getElementById("copyToClipboardButton");
+    copyButton.innerText = "Copied!";
+    setTimeout(() => copyButton.innerText = "Copy to Clipboard", 2000);
     await navigator.clipboard.writeText(wishlistText);
 }
 
@@ -33,7 +41,8 @@ function isInWishlist(text, existingText) {
     return false;
 }
 
-function toggleWishlist() {
+function toggleWishlist(e) {
+    e.stopPropagation();
     const div = document.getElementById("wishlistDiv");
     const button = document.getElementById("toggleButton");
     if (div.style.display === "flex") {
@@ -91,6 +100,11 @@ function getWishlistTextArea() {
     textarea.style.display = "inline-block";
     textarea.style.boxShadow = "rgb(245, 245, 245) 0px 0px 0px 1px inset";
     textarea.style.background = "rgba(255, 255, 255, 0.05)";
+
+    chrome.storage.local.get(["wishlistText"], (result) => {
+        console.log("Value is currently " + result.wishlistText);
+        textarea.value = result.wishlistText;
+    })
 
     return textarea;
 }
