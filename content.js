@@ -14,7 +14,7 @@ function copyToTextarea() {
     else {
         const fullText = textarea.value + text + "\n";
         textarea.value = fullText;
-        chrome.storage.local.set({"wishlistText": fullText}, () => {
+        chrome.storage.local.set({ "wishlistText": fullText }, () => {
             console.log("Value is set to " + fullText)
         });
 
@@ -129,11 +129,42 @@ function getErrorSpan() {
     errorSpan.id = "wishlistErrors";
     errorSpan.style.color = "rgb(255, 255, 255)";
     errorSpan.style.background = "rgb(255, 0, 0, 0.25)";
+    errorSpan.style.marginBottom = "5px";
     errorSpan.style.padding = "2px";
     errorSpan.style.letterSpacing = "0.2em";
     errorSpan.style.display = "none";
 
     return errorSpan;
+}
+
+// courtesy https://robkendal.co.uk/blog/2020-04-17-saving-text-to-client-side-file-using-vanilla-js
+function downloadToFile(content, filename, contentType) {
+    const a = document.createElement('a');
+    const file = new Blob([content], { type: contentType });
+
+    a.href = URL.createObjectURL(file);
+    a.download = filename;
+    a.click();
+
+    URL.revokeObjectURL(a.href);
+}
+
+function getSaveToTextFileButton() {
+    const saveButton = document.createElement("div");
+    saveButton.innerText = "Save to File";
+    saveButton.id = "saveToFileButton";
+    saveButton.style.height = "20px";
+    saveButton.style.boxShadow = "rgb(245, 245, 245) 0px 0px 0px 1px inset";
+    saveButton.style.marginBottom = "10px";
+    saveButton.style.padding = "5px";
+    saveButton.style.color = "rgb(255, 255, 255)";
+    saveButton.style.cursor = "pointer";
+    saveButton.addEventListener('click', () => {
+        const textArea = document.getElementById("wishlistText");
+    
+        downloadToFile(textArea.value, 'dim-wishlist.txt', 'text/plain');
+    });
+    return saveButton;
 }
 
 function addElements() {
@@ -153,6 +184,7 @@ function addElements() {
     wishlistDiv.appendChild(getCopyToClipboardButton());
     wishlistDiv.appendChild(getWishlistTextArea());
     wishlistDiv.appendChild(getErrorSpan());
+    wishlistDiv.appendChild(getSaveToTextFileButton());
 
     document.addEventListener("keydown", (event) => {
         if (event.key === "Insert") {
