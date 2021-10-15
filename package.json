@@ -1,0 +1,27 @@
+{
+  "name": "dimwishlistbuilder",
+  "version": "1.0.0",
+  "description": "Build a DIM wishlist with D2Gunsmith.com",
+  "main": "content.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "zip": "7z a DIMWishlistBuilder.zip content.js manifest.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "."
+  },
+  "keywords": [
+    "DIM",
+    "dim",
+    "wishlist",
+    "builder",
+    "weapons",
+    "perks",
+    "Destiny",
+    "Destiny",
+    "2"
+  ],
+  "author": "Matthew Sherrill",
+  "license": "MIT"
+}
