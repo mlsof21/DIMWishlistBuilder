@@ -1,6 +1,7 @@
 console.info("Adding button to copy wishlist");
 
 async function copyToTextarea() {
+    console.log("Entering", this)
     const wishlistText = document.querySelector("div > form > textarea");
     const text = wishlistText.value;
 
@@ -11,12 +12,12 @@ async function copyToTextarea() {
 function toggleWishlist() {
     const div = document.getElementById("wishlistDiv");
     const button = document.getElementById("toggleButton");
-    if (div.style["display"] === "flex") {
-        div.style["display"] = "none";
+    if (div.style.display === "flex") {
+        div.style.display = "none";
         button.innerText = "Show Wishlist"
     }
     else {
-        div.style["display"] = "flex";
+        div.style.display = "flex";
         button.innerText = "Hide Wishlist"
     }
 }
@@ -31,22 +32,26 @@ function contains(selector, text) {
 function addElements() {
     const root = document.getElementById("root");
     const main = document.getElementById("main");
+    
     const div = document.createElement("div");
-    div.style["display"] = "flex";
-    div.style["flexDirection"] = "column";
+    div.style.display = "flex";
+    div.style.flexDirection = "column";
     div.id = "wishlistDiv";
 
-    const toggleButton = document.createElement("button");
+    const toggleButton = document.createElement("div");
     toggleButton.id = "toggleButton";
     toggleButton.innerText = "Hide Wishlist";
-    toggleButton.style["margin-right"] = "10px";
+    toggleButton.style.display = "inline-block";
+    toggleButton.style.marginRight = "10px";
+    toggleButton.style.boxShadow = "rgb(245, 245, 245) 0px 0px 0px 1px inset";
+    toggleButton.style.padding = "5px";
     toggleButton.addEventListener("click", toggleWishlist, false);
     root.insertBefore(toggleButton, main);
 
     const addButton = document.createElement("button");
     addButton.innerText = "Add Current Item to Wishlist";
     addButton.id = "addButton";
-    addButton.style["height"] = "20px";
+    addButton.style.height = "20px";
 
     const textarea = document.createElement("textarea");
     textarea.cols = 100;
@@ -54,6 +59,7 @@ function addElements() {
     textarea.id = "wishlistTextarea";
 
     root.appendChild(div);
+
     console.log("Adding button");
     div.appendChild(addButton);
 
@@ -62,9 +68,7 @@ function addElements() {
 
     document.getElementById("addButton").addEventListener("click", copyToTextarea, false);
     document.addEventListener("keydown", (event) => {
-        console.log("Capturing key event");
-        console.log(event);
-        if (event.key == "Insert") {
+        if (event.key === "Insert") {
             copyToTextarea();
         }
     });
