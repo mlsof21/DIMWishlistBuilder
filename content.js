@@ -8,22 +8,57 @@ async function copyToTextarea() {
     textarea.value += text + "\n";
 }
 
+function toggleWishlist() {
+    const div = document.getElementById("wishlistDiv");
+    const button = document.getElementById("toggleButton");
+    if (div.style["display"] === "flex") {
+        div.style["display"] = "none";
+        button.innerText = "Show Wishlist"
+    }
+    else {
+        div.style["display"] = "flex";
+        button.innerText = "Hide Wishlist"
+    }
+}
 
-// const root = document.getElementById("root");
+function contains(selector, text) {
+    var elements = document.querySelectorAll(selector);
+    return [].filter.call(elements, function (element) {
+        return RegExp(text).test(element.textContent);
+    });
+}
+
 function addElements() {
     const root = document.getElementById("root");
+    const main = document.getElementById("main");
+    const div = document.createElement("div");
+    div.style["display"] = "flex";
+    div.style["flexDirection"] = "column";
+    div.id = "wishlistDiv";
 
-    const newButton = document.createElement("button");
-    newButton.innerText = "Add Current Item to Textarea";
-    newButton.id = "addButton";
+    const toggleButton = document.createElement("button");
+    toggleButton.id = "toggleButton";
+    toggleButton.innerText = "Hide Wishlist";
+    toggleButton.style["margin-right"] = "10px";
+    toggleButton.addEventListener("click", toggleWishlist, false);
+    root.insertBefore(toggleButton, main);
+
+    const addButton = document.createElement("button");
+    addButton.innerText = "Add Current Item to Wishlist";
+    addButton.id = "addButton";
+    addButton.style["height"] = "20px";
 
     const textarea = document.createElement("textarea");
     textarea.cols = 100;
-    textarea.rows = 1000;
+    textarea.rows = 50;
     textarea.id = "wishlistTextarea";
 
-    root.appendChild(newButton);
-    root.appendChild(textarea);
+    root.appendChild(div);
+    console.log("Adding button");
+    div.appendChild(addButton);
+
+    console.log("Adding textarea");
+    div.appendChild(textarea);
 
     document.getElementById("addButton").addEventListener("click", copyToTextarea, false);
     document.addEventListener("keydown", (event) => {
@@ -33,6 +68,10 @@ function addElements() {
             copyToTextarea();
         }
     });
+
+    const span = contains("span", "Gunsmith")[0];
+    span.parentElement.insertBefore(toggleButton, span);
+
 }
 
 let observer = new MutationObserver((mutations) => {
