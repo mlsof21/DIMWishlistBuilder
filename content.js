@@ -1,27 +1,104 @@
-console.info("Adding button to copy wishlist");
+const weaponList = ["Auto Rifle", "Hand Cannon", "Pulse Rifle", "Scout Rifle", "Sidearm", "Submachine Gun", "Bow", "Shotgun", "Sniper Rifle", "Fusion Rifle", "Trace Rifle", "Grenade Launcher", "Rocket Launcher", "Linear Fusion Rifle", "Machinegun", "Sword"];
+
+let rolls = {};
 
 function copyToTextarea() {
     console.log("Entering copyToTextArea");
     const wishlistText = document.querySelector("div > form > textarea");
     const errorSpan = document.getElementById("wishlistErrors")
-    const text = wishlistText.value;
+    const roll = wishlistText.value;
     const textarea = document.getElementById("wishlistTextarea");
+    const weaponName = getWeaponName();
 
-    if (isInWishlist(text, textarea.value)) {
+    if (isRollInWishlist(roll, weaponName)) {
         errorSpan.style.display = "block";
-        errorSpan.innerText = "This item already exists in wishlist."
+        errorSpan.innerText = "This roll already exists in wishlist."
     }
     else {
-        const fullText = textarea.value + text + "\n";
+        if(!(weaponName in rolls)) {
+            rolls[weaponName] = {}
+            rolls[weaponName]["rolls"] = [];
+            rolls[weaponName]["notes"] = "";
+            rolls[weaponName]["tags"] = "";
+        }
+        rolls[weaponName]["rolls"].push(roll);
+        let fullText = buildRollsForTextarea();
         textarea.value = fullText;
-        chrome.storage.local.set({ "wishlistText": fullText }, () => {
-            console.log("Value is set to " + fullText)
-        });
+
+        setLocalStorage(fullText);
 
         errorSpan.style.display = "none";
         errorSpan.innerText = "";
     }
 }
+
+function buildRollsForTextarea() {
+    let fullText = "";
+    for(var weapon in rolls) {
+        fullText += `// ${weapon}\n`;
+        fullText += `//notes: ${rolls[weapon]["notes"]}|tags:${rolls[weapon]["tags"]}\n`;
+        for(const roll of rolls[weapon]["rolls"]) {
+            fullText += `${roll}\n`
+        }
+        fullText += "\n"
+    }
+    return fullText;
+}
+
+function setLocalStorage() {
+    const json = JSON.stringify(rolls);
+    chrome.storage.local.set({"wishlistData": json}, () => {
+        console.log("wishlistData set to ", json);
+    });
+}
+
+let timeout = null;
+function onTextareaInput(e) {
+    clearTimeout(timeout);
+
+    timeout = setTimeout(() => {
+        console.log("User has stopped typing. Parsing the textarea and updating localStorage.");
+
+        parseTextarea();
+        buildRollsForTextarea();
+        setLocalStorage();
+    }, 5000)
+}
+
+function parseTextarea() {
+    const text = document.getElementById("wishlistTextarea").value;
+    const weapons = text.split("\n\n").filter(t => t);
+    rolls = {}
+    for(const weapon of weapons) {
+        const items = weapon.split("\n");
+        const weaponName = items[0].substr(3);
+        const notes = items[1].split("|")[0].substr(8);
+        const tags = items[1].split("|")[1].substr(5);
+        const weaponRolls = items.slice(2);
+        rolls[weaponName] = {}
+        rolls[weaponName]["notes"] = notes;
+        rolls[weaponName]["tags"] = tags;
+        rolls[weaponName]["rolls"] = weaponRolls;
+    }
+}
+
+function getWeaponName() {
+    for (let i = 0; i < weaponList.length; i++) {
+        const spans = contains("span", weaponList[i]);
+        if (spans.length >= 1) {
+            if (spans[0].parentElement.children[0].tagName === "H1") {
+                return spans[0].parentElement.children[0].innerHTML;
+            }
+        }
+    }
+    return "";
+}
+
+// function getNewBlock(weapon, newRoll, text) {
+//     const beginningIndex = text.indexOf(`// ${weapon}`);
+//     const endingIndex = text.indexOf("\n\n", beginningIndex);
+//     return text.slice(0, endingIndex - 1) + `\n${newRoll}` + text.slice(endingIndex);
+// }
 
 async function copyWishlistToClipboard() {
     const wishlistText = document.getElementById("wishlistTextarea").value;
@@ -31,11 +108,12 @@ async function copyWishlistToClipboard() {
     await navigator.clipboard.writeText(wishlistText);
 }
 
-function isInWishlist(text, existingText) {
-    const items = existingText.split("\n").filter(i => i);
-    for (let i = 0; i < items.length; i++) {
-        if (text === items[i]) {
-            return true;
+function isRollInWishlist(newRoll, weapon) {
+    if (weapon in rolls) {
+        for (const roll of rolls[weapon]["rolls"]) {
+            if (newRoll === roll) {
+                return true;
+            }
         }
     }
     return false;
@@ -101,9 +179,12 @@ function getWishlistTextArea() {
     textarea.style.boxShadow = "rgb(245, 245, 245) 0px 0px 0px 1px inset";
     textarea.style.background = "rgba(255, 255, 255, 0.05)";
 
-    chrome.storage.local.get(["wishlistText"], (result) => {
-        console.log("Value is currently " + result.wishlistText);
-        textarea.value = result.wishlistText;
+    textarea.addEventListener("input", onTextareaInput, false);
+
+    chrome.storage.local.get(["wishlistData"], (result) => {
+        console.log("Value is currently " + result.wishlistData);
+        rolls = JSON.parse(result.wishlistData);
+        textarea.value = buildRollsForTextarea();
     })
 
     return textarea;
@@ -161,7 +242,7 @@ function getSaveToTextFileButton() {
     saveButton.style.cursor = "pointer";
     saveButton.addEventListener('click', () => {
         const textArea = document.getElementById("wishlistText");
-    
+
         downloadToFile(textArea.value, 'dim-wishlist.txt', 'text/plain');
     });
     return saveButton;
@@ -169,7 +250,6 @@ function getSaveToTextFileButton() {
 
 function addElements() {
     const root = document.getElementById("root");
-    const main = document.getElementById("main");
 
     const wishlistDiv = document.createElement("div");
     wishlistDiv.style.display = "flex";
