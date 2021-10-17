@@ -57,12 +57,23 @@ function onTextareaInput(e) {
     clearTimeout(timeout);
 
     timeout = setTimeout(() => {
+<<<<<<< HEAD
         console.log("User has stopped typing. Parsing the textarea and updating localStorage.");
 
         parseTextarea();
         buildRollsForTextarea();
         setLocalStorage();
     }, 5000)
+=======
+        // const text = e.target.value;
+        // setLocalStorage();
+        console.log("User has stopped typing. Parse the textarea, and add appropriate attributes");
+        //TODO: parse textarea, then update {rolls} variable + localStorage
+        parseTextarea();
+        buildRollsForTextarea();
+        setLocalStorage();
+    }, 2000)
+>>>>>>> 107fbb3357db0e123b429012bcb9e81c5c0b8c40
 }
 
 function parseTextarea() {
