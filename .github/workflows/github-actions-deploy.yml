@@ -3,11 +3,17 @@ on:
   release:
     types:
       - created
+
 jobs:
-  deploy-to-chrome-web-store:
+  deploy-to-chrome:
     name: Deploy
+    runs-on: ubuntu-latest
     steps:
-      - name: 
+      - name: Download extension zip
+        uses: actions/download-artifact@v2
+        with:
+          name: dimwishlistbuilder
+      - name:  Upload to Chrome Web Store
         uses: Passiverecords/chrome-extension-upload-action@1.4.1
         with:
           refresh-token: '${{ secrets.CHROME_WEBSTORE_API_REFRESH_TOKEN }}'
