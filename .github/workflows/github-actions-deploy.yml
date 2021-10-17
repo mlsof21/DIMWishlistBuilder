@@ -3,11 +3,16 @@ on:
   release:
     types:
       - created
-uses: Passiverecords/chrome-extension-upload-action@1.4.1
-  with:
-    refresh-token: '${{ secrets.CHROME_WEBSTORE_API_REFRESH_TOKEN }}'
-    client-id: '${{ secrets.CHROME_WEBSTORE_API_CLIENT_ID }}'
-    client-secret: ''
-    file-name: './DIMWishlistBuilder.zip'
-    app-id: 'glmoclbimdhkcojkbkkkppommhopldif'
-    publish: true
+jobs:
+  deploy-to-chrome-web-store:
+    name: Deploy
+    steps:
+      - name: 
+        uses: Passiverecords/chrome-extension-upload-action@1.4.1
+        with:
+          refresh-token: '${{ secrets.CHROME_WEBSTORE_API_REFRESH_TOKEN }}'
+          client-id: '${{ secrets.CHROME_WEBSTORE_API_CLIENT_ID }}'
+          client-secret: ''
+          file-name: './DIMWishlistBuilder.zip'
+          app-id: 'glmoclbimdhkcojkbkkkppommhopldif'
+          publish: true
