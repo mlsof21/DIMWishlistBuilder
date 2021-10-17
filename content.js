@@ -9,21 +9,27 @@ function copyToTextarea() {
     const roll = wishlistText.value;
     const textarea = document.getElementById("wishlistTextarea");
     const weaponName = getWeaponName();
+    let shouldScroll = false;
 
     if (isRollInWishlist(roll, weaponName)) {
         errorSpan.style.display = "block";
         errorSpan.innerText = "This roll already exists in wishlist."
     }
     else {
-        if(!(weaponName in rolls)) {
+        if (!(weaponName in rolls)) {
             rolls[weaponName] = {}
             rolls[weaponName]["rolls"] = [];
             rolls[weaponName]["notes"] = "";
             rolls[weaponName]["tags"] = "";
+            shouldScroll = true;
         }
         rolls[weaponName]["rolls"].push(roll);
         let fullText = buildRollsForTextarea();
         textarea.value = fullText;
+
+        if (shouldScroll) {
+            textarea.scrollTop = textarea.scrollHeight;
+        }
 
         setLocalStorage(fullText);
 
@@ -34,10 +40,10 @@ function copyToTextarea() {
 
 function buildRollsForTextarea() {
     let fullText = "";
-    for(var weapon in rolls) {
+    for (var weapon in rolls) {
         fullText += `// ${weapon}\n`;
         fullText += `//notes: ${rolls[weapon]["notes"]}|tags:${rolls[weapon]["tags"]}\n`;
-        for(const roll of rolls[weapon]["rolls"]) {
+        for (const roll of rolls[weapon]["rolls"]) {
             fullText += `${roll}\n`
         }
         fullText += "\n"
@@ -47,7 +53,7 @@ function buildRollsForTextarea() {
 
 function setLocalStorage() {
     const json = JSON.stringify(rolls);
-    chrome.storage.local.set({"wishlistData": json}, () => {
+    chrome.storage.local.set({ "wishlistData": json }, () => {
         console.log("wishlistData set to ", json);
     });
 }
@@ -57,30 +63,19 @@ function onTextareaInput(e) {
     clearTimeout(timeout);
 
     timeout = setTimeout(() => {
-<<<<<<< HEAD
         console.log("User has stopped typing. Parsing the textarea and updating localStorage.");
 
         parseTextarea();
         buildRollsForTextarea();
         setLocalStorage();
     }, 5000)
-=======
-        // const text = e.target.value;
-        // setLocalStorage();
-        console.log("User has stopped typing. Parse the textarea, and add appropriate attributes");
-        //TODO: parse textarea, then update {rolls} variable + localStorage
-        parseTextarea();
-        buildRollsForTextarea();
-        setLocalStorage();
-    }, 2000)
->>>>>>> 107fbb3357db0e123b429012bcb9e81c5c0b8c40
 }
 
 function parseTextarea() {
     const text = document.getElementById("wishlistTextarea").value;
     const weapons = text.split("\n\n").filter(t => t);
     rolls = {}
-    for(const weapon of weapons) {
+    for (const weapon of weapons) {
         const items = weapon.split("\n");
         const weaponName = items[0].substr(3);
         const notes = items[1].split("|")[0].substr(8);
@@ -185,6 +180,7 @@ function getWishlistTextArea() {
     textarea.cols = 100;
     textarea.rows = 50;
     textarea.id = "wishlistTextarea";
+    textarea.spellcheck = false;
     textarea.style.color = "rgb(255, 255, 255)";
     textarea.style.display = "inline-block";
     textarea.style.boxShadow = "rgb(245, 245, 245) 0px 0px 0px 1px inset";
