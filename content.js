@@ -134,15 +134,6 @@ function contains(selector, text) {
   });
 }
 
-// function getAddToWishlistButton() {
-//   const addButton = document.createElement("div");
-//   addButton.innerText = "Add Current Item to Wishlist";
-//   addButton.id = "addToWishlistButton";
-//   addButton.addEventListener("click", copyToTextarea, false);
-
-//   return addButton;
-// }
-
 function getToggleButton() {
   const toggleButton = document.createElement("div");
   toggleButton.id = "toggleWishlistButton";
@@ -151,56 +142,6 @@ function getToggleButton() {
 
   return toggleButton;
 }
-
-// function getWishlistTextArea() {
-//   const textarea = document.createElement("textarea");
-//   textarea.cols = 100;
-//   textarea.rows = 50;
-//   textarea.id = "wishlistTextarea";
-//   textarea.spellcheck = false;
-//   // textarea.style.color = "rgb(255, 255, 255)";
-//   // textarea.style.display = "inline-block";
-//   // textarea.style.boxShadow = "rgb(245, 245, 245) 0px 0px 0px 1px inset";
-//   // textarea.style.background = "rgba(255, 255, 255, 0.05)";
-
-//   textarea.addEventListener("input", onTextareaInput, false);
-
-//   chrome.storage.local.get(["wishlistData"], (result) => {
-//     console.log("Value is currently " + result.wishlistData);
-//     rolls = JSON.parse(result.wishlistData);
-//     textarea.value = buildRollsForTextarea();
-//   });
-
-//   return textarea;
-// }
-
-// function getCopyToClipboardButton() {
-//   const copyButton = document.createElement("div");
-//   copyButton.innerText = "Copy to Clipboard";
-//   copyButton.id = "copyToClipboardButton";
-//   //   copyButton.style.height = "20px";
-//   //   copyButton.style.boxShadow = "rgb(245, 245, 245) 0px 0px 0px 1px inset";
-//   //   copyButton.style.marginBottom = "10px";
-//   //   copyButton.style.padding = "5px";
-//   //   copyButton.style.color = "rgb(255, 255, 255)";
-//   //   copyButton.style.cursor = "pointer";
-//   copyButton.addEventListener("click", copyWishlistToClipboard, false);
-
-//   return copyButton;
-// }
-
-// function getErrorSpan() {
-//   const errorSpan = document.createElement("span");
-//   errorSpan.id = "wishlistErrors";
-//   //   errorSpan.style.color = "rgb(255, 255, 255)";
-//   //   errorSpan.style.background = "rgb(255, 0, 0, 0.25)";
-//   //   errorSpan.style.marginBottom = "5px";
-//   //   errorSpan.style.padding = "2px";
-//   //   errorSpan.style.letterSpacing = "0.2em";
-//   //   errorSpan.style.display = "none";
-
-//   return errorSpan;
-// }
 
 // courtesy https://robkendal.co.uk/blog/2020-04-17-saving-text-to-client-side-file-using-vanilla-js
 function downloadToFile(content, filename, contentType) {
@@ -213,24 +154,6 @@ function downloadToFile(content, filename, contentType) {
 
   URL.revokeObjectURL(a.href);
 }
-
-// function getSaveToTextFileButton() {
-//   const saveButton = document.createElement("div");
-//   saveButton.innerText = "Save to File";
-//   saveButton.id = "saveToFileButton";
-//   //   saveButton.style.height = "20px";
-//   //   saveButton.style.boxShadow = "rgb(245, 245, 245) 0px 0px 0px 1px inset";
-//   //   saveButton.style.marginBottom = "10px";
-//   //   saveButton.style.padding = "5px";
-//   //   saveButton.style.color = "rgb(255, 255, 255)";
-//   //   saveButton.style.cursor = "pointer";
-//   saveButton.addEventListener("click", () => {
-//     const textArea = document.getElementById("wishlistTextarea");
-
-//     downloadToFile(textArea.value, "dim-wishlist.txt", "text/plain");
-//   });
-//   return saveButton;
-// }
 
 function addEventListeners() {
   const addToWishlistButton = document.getElementById("addToWishlistButton");
@@ -314,7 +237,6 @@ let observer = new MutationObserver((mutations) => {
     if (!mutation.addedNodes) return;
 
     for (let i = 0; i < mutation.addedNodes.length; i++) {
-      // do things to your newly added nodes here
       let node = mutation.addedNodes[i];
       if (node.nodeName.toLowerCase() == "main") {
         addElements();
