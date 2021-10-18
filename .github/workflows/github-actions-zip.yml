@@ -6,7 +6,7 @@ on:
     # paths:
     #   - 'content.js'
     #   - 'manifest.json'
-
+      
 jobs:
   zip-and-upload-files:
     name: Zip and Upload files
