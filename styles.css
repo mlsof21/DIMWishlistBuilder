@@ -1,0 +1,39 @@
+#wishlistDiv {
+    display: flex;
+    flex-direction: column;
+}
+
+#toggleWishlistButton {
+  display: inline-block;
+  margin-right: 10px;
+  box-shadow: rgb(245, 245, 245) 0px 0px 0px 1px inset;
+  padding: 5px;
+}
+
+#wishlistTextarea {
+  color: rgb(255, 255, 255);
+  display: inline-block;
+  box-shadow: rgb(245, 245, 245) 0px 0px 0px 1px inset;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+#addToWishlistButton,
+#copyToClipboardButton,
+#saveToFileButton {
+  height: 20px;
+  box-shadow: rgb(245, 245, 245) 0px 0px 0px 1px inset;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding: 5px;
+  color: rgb(255, 255, 255);
+  cursor: pointer;
+}
+
+#wishlistErrors {
+  color: rgb(255, 255, 255);
+  background: rgb(255, 0, 0, 0.25);
+  margin-bottom: 5px;
+  padding: 2px;
+  letter-spacing: 0.2em;
+  display: none;
+}
