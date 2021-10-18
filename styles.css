@@ -1,6 +1,6 @@
 #wishlistDiv {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 #toggleWishlistButton {
@@ -17,9 +17,22 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
-#addToWishlistButton,
-#copyToClipboardButton,
-#saveToFileButton {
+#wishlistErrors {
+  color: rgb(255, 255, 255);
+  background: rgb(255, 0, 0, 0.25);
+  margin-bottom: 5px;
+  padding: 2px;
+  letter-spacing: 0.2em;
+  display: none;
+}
+
+.buttons {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.wishlistButton {
+  margin-left: 5px;
   height: 20px;
   box-shadow: rgb(245, 245, 245) 0px 0px 0px 1px inset;
   margin-top: 10px;
@@ -29,11 +42,31 @@
   cursor: pointer;
 }
 
-#wishlistErrors {
-  color: rgb(255, 255, 255);
-  background: rgb(255, 0, 0, 0.25);
-  margin-bottom: 5px;
-  padding: 2px;
-  letter-spacing: 0.2em;
-  display: none;
+.wishlistButton.disabled {
+  background: rgb(96, 96, 96);
+  pointer-events: none;
+}
+
+.wishlistButton:hover:not(.disabled) {
+  background: rgb(81, 141, 186);
+}
+
+.wishlistButton {
+  margin-left: 10px;
+}
+
+.buttons label {
+    color: rgb(255,255,255);
+}
+
+.radios {
+  display: inline-grid;
+  /* tells the auto-placement algorithm to attempt to fill in holes earlier in the grid if smaller items come up later */
+  grid-auto-flow: dense;
+  align-items: center;
+}
+
+.radios label {
+  grid-column: 2;
+  font-size: .8em;
 }

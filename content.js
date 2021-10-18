@@ -4,27 +4,25 @@ function copyToTextarea() {
   const wishlistText = document.querySelector("div > form > textarea");
   const errorSpan = document.getElementById("wishlistErrors");
   const roll = wishlistText.value;
+  const typeOfRoll = getRollType();
   const textarea = document.getElementById("wishlistTextarea");
   const weaponHash = roll.split("&")[0].substr(17);
-  const weaponName = getWeaponName(weaponHash);
-  let shouldScroll = false;
+  const weaponName = weaponMap[weaponHash];
+  const rollKey = `${weaponName} (${typeOfRoll})`;
 
-  if (isRollInWishlist(roll, weaponHash)) {
+  if (isRollInWishlist(roll, rollKey)) {
     errorSpan.style.display = "block";
     errorSpan.innerText = "This roll already exists in wishlist.";
   } else {
-    if (!(weaponHash in rolls)) {
-      rolls[weaponHash] = {};
-      rolls[weaponHash]["name"] = weaponName;
-      rolls[weaponHash]["rolls"] = [];
-      rolls[weaponHash]["notes"] = "";
-      rolls[weaponHash]["tags"] = "";
-      shouldScroll = true;
+    if (!(rollKey in rolls)) {
+      rolls[rollKey] = {};
+      rolls[rollKey]["name"] = weaponName;
+      rolls[rollKey]["rolls"] = [];
+      rolls[rollKey]["notes"] = `${typeOfRoll}-`;
     }
-    rolls[weaponHash]["rolls"].push(roll);
+    rolls[rollKey]["rolls"].push(roll);
     let fullText = buildRollsForTextarea();
     textarea.value = fullText;
-    textarea.setSelec;
 
     setLocalStorage(fullText);
 
@@ -33,12 +31,17 @@ function copyToTextarea() {
   }
 }
 
+function getRollType() {
+  const checkedRadio = document.querySelector("input[name=rollType]:checked");
+  return checkedRadio.value;
+}
+
 function buildRollsForTextarea() {
   let fullText = "";
-  for (var weaponHash in rolls) {
-    fullText += `// ${rolls[weaponHash]["name"]}\n`;
-    fullText += `//notes:${rolls[weaponHash]["notes"]}|tags:${rolls[weaponHash]["tags"]}\n`;
-    for (const roll of rolls[weaponHash]["rolls"]) {
+  for (var weaponKey in rolls) {
+    fullText += `// ${weaponKey}\n`;
+    fullText += `//notes:${rolls[weaponKey]["notes"]}\n`;
+    for (const roll of rolls[weaponKey]["rolls"]) {
       fullText += `${roll}\n`;
     }
     fullText += "\n";
@@ -56,7 +59,8 @@ function setLocalStorage() {
 let timeout = null;
 function onTextareaInput(e) {
   clearTimeout(timeout);
-
+  const addButton = document.getElementById("addToWishlistButton");
+  disableButton(addButton, copyToTextarea);
   timeout = setTimeout(() => {
     console.log(
       "User has stopped typing. Parsing the textarea and updating localStorage."
@@ -65,7 +69,18 @@ function onTextareaInput(e) {
     parseTextarea();
     buildRollsForTextarea();
     setLocalStorage();
+    enableButton(addButton, copyToTextarea);
   }, 5000);
+}
+
+function disableButton(button, func) {
+  button.classList.add("disabled");
+  button.removeEventListener("click", func);
+}
+
+function enableButton(button, func) {
+  button.classList.remove("disabled");
+  button.addEventListener("click", func);
 }
 
 function parseTextarea() {
@@ -80,19 +95,13 @@ function parseTextarea() {
       weaponHash = weaponHash.substr(1);
     }
 
-    const weaponName = items[0].substr(3);
-    const notes = items[1].split("|")[0].substr(8).trim();
-    const tags = items[1].split("|")[1].substr(5).trim();
-    rolls[weaponHash] = {};
-    rolls[weaponHash]["name"] = weaponName;
-    rolls[weaponHash]["notes"] = notes;
-    rolls[weaponHash]["tags"] = tags;
-    rolls[weaponHash]["rolls"] = weaponRolls;
+    const weaponKey = items[0].substr(3);
+    const notes = items[1].substr(8).trim();
+    rolls[weaponKey] = {};
+    rolls[weaponKey]["name"] = weaponMap[weaponHash];
+    rolls[weaponKey]["notes"] = notes;
+    rolls[weaponKey]["rolls"] = weaponRolls;
   }
-}
-
-function getWeaponName(hash) {
-  return manifest.DestinyInventoryItemDefinition[hash].displayProperties.name;
 }
 
 async function copyWishlistToClipboard() {
@@ -185,11 +194,21 @@ function addElements() {
   const wishlistDiv = document.createElement("div");
   wishlistDiv.id = "wishlistDiv";
   wishlistDiv.innerHTML = `
-    <div id="addToWishlistButton">Add Current Item to Wishlist</div>
-    <div id="copyToClipboardButton">Copy to Clipboard</div>
+    <div class="buttons">
+			<div id="addToWishlistButton" class="wishlistButton">Add Current Item to Wishlist</div>
+    	<div id="copyToClipboardButton" class="wishlistButton">Copy to Clipboard</div>
+			<div id="saveToFileButton" class="wishlistButton">Save to File</div>
+			<div class="radios" id="typeRadios">
+				<input type="radio" name="rollType" id="PvE" value="PvE" checked>
+				<label for="PvE">PvE</label>
+				<input type="radio" name="rollType" id="PvP" value="PvP">
+				<label for="PvP">PvP</label>
+				<input type="radio" name="rollType" id="GM" value="GM">
+				<label for="GM">GM</label>
+			</div>
+		</div>
     <textarea cols="90" rows="50" id="wishlistTextarea" spellcheck="false"></textarea>
-    <span id="wishlistErrors"></span>
-    <div id="saveToFileButton">Save to File</div>
+    <span id="wishlistErrors"></span>   
   `;
 
   const toggleButton = getToggleButton();
@@ -214,7 +233,7 @@ function addElements() {
   span.parentElement.insertBefore(toggleButton, span);
 }
 
-let manifest = {};
+let weaponMap = {};
 
 async function getManifest() {
   const response = await fetch(
@@ -227,7 +246,12 @@ async function getManifest() {
   const fullManifest = await fetch("https://www.bungie.net" + jsonWorld);
   const fullManifestJson = await fullManifest.json();
 
-  manifest = fullManifestJson;
+  for (const hash in fullManifestJson.DestinyInventoryItemDefinition) {
+    weaponMap[hash] =
+      fullManifestJson.DestinyInventoryItemDefinition[
+        hash
+      ].displayProperties.name;
+  }
 }
 
 getManifest();
