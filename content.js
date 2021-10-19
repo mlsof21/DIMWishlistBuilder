@@ -90,7 +90,7 @@ function parseTextarea() {
   for (const weapon of weapons) {
     const items = weapon.split("\n");
     const weaponRolls = items.slice(2);
-    let weaponHash = weaponRolls[0].split("&")[0].substr(17);
+    let weaponHash =  weaponRolls[0].indexOf("&") >= 0 ? weaponRolls[0].split("&")[0].substr(17) : weaponRolls[0].substr(17)
     if (weaponHash.indexOf("-") === 0) {
       weaponHash = weaponHash.substr(1);
     }
