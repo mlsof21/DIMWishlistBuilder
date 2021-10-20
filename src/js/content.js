@@ -66,7 +66,7 @@ let timeout = null;
 function onTextareaInput(e) {
   clearTimeout(timeout);
   const addButton = document.getElementById("addToWishlistButton");
-  disableButton(addButton, copyToTextarea);
+  disableAddButton(addButton, copyToTextarea);
   timeout = setTimeout(() => {
     console.log(
       "User has stopped typing. Parsing the textarea and updating localStorage."
@@ -75,18 +75,18 @@ function onTextareaInput(e) {
     parseTextarea();
     buildRollsForTextarea();
     setLocalStorage();
-    enableButton(addButton, copyToTextarea);
-  }, 5000);
+    enableAddButton(addButton, copyToTextarea);
+  }, 2000);
 }
 
-function disableButton(button, func) {
+function disableAddButton(button, func) {
   button.classList.add("disabled");
   button.removeEventListener("click", func);
   button.innerText = "Updating...Please wait";
   addingEnabled = false;
 }
 
-function enableButton(button, func) {
+function enableAddButton(button, func) {
   button.classList.remove("disabled");
   button.addEventListener("click", func);
   button.innerText = "Add to Wishlist";
@@ -207,15 +207,25 @@ function pressShortcutKey(event) {
       copyToTextarea();
     } else {
       setTimeout(() => {
-        const error = document.getElementById("wishlistErrors");
-        console.log("Removing warning class from errorSpan");
-        error.classList.remove("warning");
-      }, 3000);
-      const error = document.getElementById("wishlistErrors");
-      console.log("Adding warning class to errorSpan");
-      error.classList.add("warning");
+        removeWarning();
+      }, 2000);
+      addWarning();
     }
   }
+}
+
+function addWarning() {
+  const error = document.getElementById("wishlistErrors");
+  console.log("Adding warning class to errorSpan");
+  error.innerText = "Currently parsing new input in wishlist. Please wait...";
+  error.classList.add("warning");
+}
+
+function removeWarning() {
+  const error = document.getElementById("wishlistErrors");
+  console.log("Removing warning class from errorSpan");
+  error.innerText = "";
+  error.classList.remove("warning");
 }
 
 function addElements() {
