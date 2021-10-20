@@ -1,4 +1,5 @@
 let rolls = {};
+let addingEnabled = true;
 
 function copyToTextarea() {
   const wishlistText = document.querySelector("div > form > textarea");
@@ -23,6 +24,11 @@ function copyToTextarea() {
     rolls[rollKey]["rolls"].push(roll);
     let fullText = buildRollsForTextarea();
     textarea.value = fullText;
+
+    const startHighlight = textarea.value.indexOf(roll);
+
+    textarea.focus();
+    textarea.setSelectionRange(startHighlight, startHighlight + roll.length);
 
     setLocalStorage(fullText);
 
@@ -76,11 +82,15 @@ function onTextareaInput(e) {
 function disableButton(button, func) {
   button.classList.add("disabled");
   button.removeEventListener("click", func);
+  button.innerText = "Updating...Please wait";
+  addingEnabled = false;
 }
 
 function enableButton(button, func) {
   button.classList.remove("disabled");
   button.addEventListener("click", func);
+  button.innerText = "Add to Wishlist";
+  addingEnabled = true;
 }
 
 function parseTextarea() {
@@ -90,7 +100,10 @@ function parseTextarea() {
   for (const weapon of weapons) {
     const items = weapon.split("\n");
     const weaponRolls = items.slice(2);
-    let weaponHash =  weaponRolls[0].indexOf("&") >= 0 ? weaponRolls[0].split("&")[0].substr(17) : weaponRolls[0].substr(17)
+    let weaponHash =
+      weaponRolls[0].indexOf("&") >= 0
+        ? weaponRolls[0].split("&")[0].substr(17)
+        : weaponRolls[0].substr(17);
     if (weaponHash.indexOf("-") === 0) {
       weaponHash = weaponHash.substr(1);
     }
@@ -188,6 +201,23 @@ function addEventListeners() {
   });
 }
 
+function pressShortcutKey(event) {
+  if (event.key === "Insert") {
+    if (addingEnabled) {
+      copyToTextarea();
+    } else {
+      setTimeout(() => {
+        const error = document.getElementById("wishlistErrors");
+        console.log("Removing warning class from errorSpan");
+        error.classList.remove("warning");
+      }, 3000);
+      const error = document.getElementById("wishlistErrors");
+      console.log("Adding warning class to errorSpan");
+      error.classList.add("warning");
+    }
+  }
+}
+
 function addElements() {
   const root = document.getElementById("root");
 
@@ -195,7 +225,7 @@ function addElements() {
   wishlistDiv.id = "wishlistDiv";
   wishlistDiv.innerHTML = `
     <div class="buttons">
-			<div id="addToWishlistButton" class="wishlistButton">Add Current Item to Wishlist</div>
+			<div id="addToWishlistButton" class="wishlistButton">Add to Wishlist</div>
     	<div id="copyToClipboardButton" class="wishlistButton">Copy to Clipboard</div>
 			<div id="saveToFileButton" class="wishlistButton">Save to File</div>
 			<div class="radios" id="typeRadios">
@@ -223,11 +253,7 @@ function addElements() {
     wishlistTextarea.value = buildRollsForTextarea();
   });
 
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Insert") {
-      copyToTextarea();
-    }
-  });
+  document.addEventListener("keydown", pressShortcutKey);
 
   const span = contains("span", "Gunsmith")[0];
   span.parentElement.insertBefore(toggleButton, span);

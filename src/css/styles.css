@@ -26,6 +26,11 @@
   display: none;
 }
 
+#wishlistErrors.warning {
+  background: rgb(255, 255, 0, 0.25);
+  display: block;
+}
+
 .buttons {
   display: flex;
   justify-content: flex-start;

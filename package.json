@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "zip": "7z a DIMWishlistBuilder.zip content.js manifest.json styles.css"
+    "zip": "python build.py"
   },
   "repository": {
     "type": "git",
@@ -28,5 +28,9 @@
   "devDependencies": {
     "chrome-webstore-upload": "^0.6.2",
     "eslint": "^8.0.1"
+  },
+  "dependencies": {
+    "source-map-loader": "^3.0.0",
+    "ts-loader": "^9.2.6"
   }
 }
