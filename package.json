@@ -5,8 +5,8 @@
   "main": "content.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "zip": "7z a DIMWishlistBuilder.zip content.js manifest.json styles.css"
+    "test": "jest",
+    "zip": "python build.py"
   },
   "repository": {
     "type": "git",
@@ -27,6 +27,11 @@
   "license": "MIT",
   "devDependencies": {
     "chrome-webstore-upload": "^0.6.2",
-    "eslint": "^8.0.1"
+    "eslint": "^8.0.1",
+    "jest": "^27.3.1"
+  },
+  "dependencies": {
+    "source-map-loader": "^3.0.0",
+    "ts-loader": "^9.2.6"
   }
 }

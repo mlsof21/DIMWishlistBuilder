@@ -1,4 +1,5 @@
 let rolls = {};
+let addingEnabled = true;
 
 function copyToTextarea() {
   const wishlistText = document.querySelector("div > form > textarea");
@@ -23,6 +24,11 @@ function copyToTextarea() {
     rolls[rollKey]["rolls"].push(roll);
     let fullText = buildRollsForTextarea();
     textarea.value = fullText;
+
+    const startHighlight = textarea.value.indexOf(roll);
+
+    textarea.focus();
+    textarea.setSelectionRange(startHighlight, startHighlight + roll.length);
 
     setLocalStorage(fullText);
 
@@ -60,7 +66,7 @@ let timeout = null;
 function onTextareaInput(e) {
   clearTimeout(timeout);
   const addButton = document.getElementById("addToWishlistButton");
-  disableButton(addButton, copyToTextarea);
+  disableAddButton(addButton, copyToTextarea);
   timeout = setTimeout(() => {
     console.log(
       "User has stopped typing. Parsing the textarea and updating localStorage."
@@ -69,18 +75,22 @@ function onTextareaInput(e) {
     parseTextarea();
     buildRollsForTextarea();
     setLocalStorage();
-    enableButton(addButton, copyToTextarea);
-  }, 5000);
+    enableAddButton(addButton, copyToTextarea);
+  }, 2000);
 }
 
-function disableButton(button, func) {
+function disableAddButton(button, func) {
   button.classList.add("disabled");
   button.removeEventListener("click", func);
+  button.innerText = "Updating...Please wait";
+  addingEnabled = false;
 }
 
-function enableButton(button, func) {
+function enableAddButton(button, func) {
   button.classList.remove("disabled");
   button.addEventListener("click", func);
+  button.innerText = "Add to Wishlist";
+  addingEnabled = true;
 }
 
 function parseTextarea() {
@@ -90,7 +100,10 @@ function parseTextarea() {
   for (const weapon of weapons) {
     const items = weapon.split("\n");
     const weaponRolls = items.slice(2);
-    let weaponHash =  weaponRolls[0].indexOf("&") >= 0 ? weaponRolls[0].split("&")[0].substr(17) : weaponRolls[0].substr(17)
+    let weaponHash =
+      weaponRolls[0].indexOf("&") >= 0
+        ? weaponRolls[0].split("&")[0].substr(17)
+        : weaponRolls[0].substr(17);
     if (weaponHash.indexOf("-") === 0) {
       weaponHash = weaponHash.substr(1);
     }
@@ -188,6 +201,33 @@ function addEventListeners() {
   });
 }
 
+function pressShortcutKey(event) {
+  if (event.key === "Insert") {
+    if (addingEnabled) {
+      copyToTextarea();
+    } else {
+      setTimeout(() => {
+        removeWarning();
+      }, 2000);
+      addWarning();
+    }
+  }
+}
+
+function addWarning() {
+  const error = document.getElementById("wishlistErrors");
+  console.log("Adding warning class to errorSpan");
+  error.innerText = "Currently parsing new input in wishlist. Please wait...";
+  error.classList.add("warning");
+}
+
+function removeWarning() {
+  const error = document.getElementById("wishlistErrors");
+  console.log("Removing warning class from errorSpan");
+  error.innerText = "";
+  error.classList.remove("warning");
+}
+
 function addElements() {
   const root = document.getElementById("root");
 
@@ -195,7 +235,7 @@ function addElements() {
   wishlistDiv.id = "wishlistDiv";
   wishlistDiv.innerHTML = `
     <div class="buttons">
-			<div id="addToWishlistButton" class="wishlistButton">Add Current Item to Wishlist</div>
+			<div id="addToWishlistButton" class="wishlistButton">Add to Wishlist</div>
     	<div id="copyToClipboardButton" class="wishlistButton">Copy to Clipboard</div>
 			<div id="saveToFileButton" class="wishlistButton">Save to File</div>
 			<div class="radios" id="typeRadios">
@@ -223,11 +263,7 @@ function addElements() {
     wishlistTextarea.value = buildRollsForTextarea();
   });
 
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Insert") {
-      copyToTextarea();
-    }
-  });
+  document.addEventListener("keydown", pressShortcutKey);
 
   const span = contains("span", "Gunsmith")[0];
   span.parentElement.insertBefore(toggleButton, span);
