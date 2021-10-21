@@ -1,6 +1,7 @@
 #wishlistDiv {
   display: flex;
   flex-direction: column;
+  color: rgb(255, 255, 255);
 }
 
 #toggleWishlistButton {
@@ -18,7 +19,6 @@
 }
 
 #wishlistErrors {
-  color: rgb(255, 255, 255);
   margin-bottom: 5px;
   padding: 2px;
   letter-spacing: 0.2em;
@@ -47,7 +47,6 @@
   margin-top: 10px;
   margin-bottom: 10px;
   padding: 5px;
-  color: rgb(255, 255, 255);
   cursor: pointer;
 }
 
@@ -64,10 +63,6 @@
   margin-left: 10px;
 }
 
-.buttons label {
-    color: rgb(255,255,255);
-}
-
 .radios {
   display: inline-grid;
   /* tells the auto-placement algorithm to attempt to fill in holes earlier in the grid if smaller items come up later */
@@ -79,3 +74,42 @@
   grid-column: 2;
   font-size: .8em;
 }
+
+/* The Modal (background) */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto; /* 15% from the top and centered */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%; /* Could be more or less, depending on screen size */
+}
+
+/* The Close Button */
+.close {
+  /* color: #aaa; */
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  /* color: black; */
+  text-decoration: none;
+  cursor: pointer;
+}
+

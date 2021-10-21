@@ -199,6 +199,25 @@ function addEventListeners() {
 
     downloadToFile(textArea.value, "dim-wishlist.txt", "text/plain");
   });
+
+  // Modal event listeners
+  const modal = document.getElementById("wishlistHelp");
+
+  const helpButton = document.getElementById("helpButton");
+  helpButton.addEventListener("click", () => {
+    modal.style.display = "block";
+  });
+  
+  const closeSpan = document.getElementsByClassName("close")[0];
+  closeSpan.addEventListener("click", () => {
+    modal.style.display = "none";
+  });
+
+  window.addEventListener("click", (event) => {
+    if (event.target == modal) {
+      modal.style.display = "none";
+    }
+  });
 }
 
 function pressShortcutKey(event) {
@@ -246,10 +265,18 @@ function addElements() {
 				<input type="radio" name="rollType" id="GM" value="GM">
 				<label for="GM">GM</label>
 			</div>
+      <span class="help" id="helpButton">?</span>
 		</div>
     <textarea cols="90" rows="50" id="wishlistTextarea" spellcheck="false"></textarea>
-    <span id="wishlistErrors"></span>   
+    <span id="wishlistErrors"></span>
+    <div id="wishlistHelp" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <p>This is some help text</p>
+      </div>
+    </div>
   `;
+  
 
   const toggleButton = getToggleButton();
 
