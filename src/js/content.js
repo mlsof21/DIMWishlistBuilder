@@ -12,7 +12,7 @@ function copyToTextarea() {
   const rollKey = `${weaponName} (${typeOfRoll})`;
 
   if (isRollInWishlist(roll, rollKey)) {
-    errorSpan.style.display = "block";
+    errorSpan.classList.add("error");
     errorSpan.innerText = "This roll already exists in wishlist.";
   } else {
     if (!(rollKey in rolls)) {
@@ -32,7 +32,7 @@ function copyToTextarea() {
 
     setLocalStorage(fullText);
 
-    errorSpan.style.display = "none";
+    errorSpan.classList.remove("error");
     errorSpan.innerText = "";
   }
 }
