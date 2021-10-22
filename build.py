@@ -34,9 +34,8 @@ def zip_files(files: List[str], browser: str):
                 manifest["manifest_version"] = 2
             
             zf.writestr(f[2:], json.dumps(manifest, indent=2))
-
-
-        zf.write(f[2:])
+        else:
+            zf.write(f[2:])
 
     zf.close()
 
