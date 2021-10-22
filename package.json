@@ -1,8 +1,8 @@
 {
   "name": "dimwishlistbuilder",
-  "version": "1.0.0",
+  "version": "1.0.6",
   "description": "Build a DIM wishlist with D2Gunsmith.com",
-  "main": "content.js",
+  "main": "src/js/content.js",
   "type": "module",
   "scripts": {
     "test": "jest",
@@ -15,18 +15,18 @@
   "keywords": [
     "DIM",
     "dim",
+    "Destiny Item Manager",
     "wishlist",
     "builder",
     "weapons",
     "perks",
     "Destiny",
-    "Destiny",
-    "2"
+    "Destiny 2",
+    "D2Gunsmith"
   ],
   "author": "Matthew Sherrill",
   "license": "MIT",
-  "devDependencies": {
-    "chrome-webstore-upload": "^0.6.2",
+  "devDependencies": {    
     "eslint": "^8.0.1",
     "jest": "^27.3.1"
   },

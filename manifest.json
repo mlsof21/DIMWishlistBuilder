@@ -18,6 +18,7 @@
     }
   ],
   "permissions": [
-    "storage"
+    "storage",
+    "*://www.bungie.net/*"
   ]
 }
