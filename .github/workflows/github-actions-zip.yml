@@ -4,7 +4,8 @@ on:
     branches:
       - main
     # paths:
-    #   - 'content.js'
+    #   - 'src/js/content.js'
+    #   - 'src/css/styles.css'
     #   - 'manifest.json'
       
 jobs:
@@ -13,26 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2     
-      - uses: actions/upload-artifact@v2
-        with:
-          name: dimwishlistbuilder
-          path: |
-            content.js
-            manifest.json
+      - uses: actions/setup-python@v2
       - name: Download extension zip
         uses: actions/download-artifact@v2
         with:
-          name: dimwishlistbuilder
-          path: dimwishlistbuilder.zip      
-      - name:  Upload to Chrome Web Store
-        uses: mnao305/chrome-extension-upload@1.1.1
-        with:         
-          file-path: dimwishlistbuilder.zip
-          extension-id: 'glmoclbimdhkcojkbkkkppommhopldif'
-          client-id: ${{ secrets.CLIENT_ID }}
-          client-secret: 'test'
-          refresh-token: ${{ secrets.REFRESH_TOKEN }}
-
+          python-version: 3.8 
+      - name: Execute build script
+        run: |
+          python build.py
 
 
   
