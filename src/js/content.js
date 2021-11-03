@@ -100,20 +100,24 @@ function parseTextarea() {
   for (const weapon of weapons) {
     const items = weapon.split("\n");
     const weaponRolls = items.slice(2);
-    let weaponHash =
-      weaponRolls[0].indexOf("&") >= 0
-        ? weaponRolls[0].split("&")[0].substr(17)
-        : weaponRolls[0].substr(17);
-    if (weaponHash.indexOf("-") === 0) {
-      weaponHash = weaponHash.substr(1);
-    }
 
-    const weaponKey = items[0].substr(3);
-    const notes = items[1].substr(8).trim();
-    rolls[weaponKey] = {};
-    rolls[weaponKey]["name"] = weaponMap[weaponHash];
-    rolls[weaponKey]["notes"] = notes;
-    rolls[weaponKey]["rolls"] = weaponRolls;
+    //Don't add back a weapon if it doesn't have any rolls
+    if (weaponRolls && weaponRolls.length > 0) {
+      let weaponHash =
+        weaponRolls[0].indexOf("&") >= 0
+          ? weaponRolls[0].split("&")[0].substr(17)
+          : weaponRolls[0].substr(17);
+      if (weaponHash.indexOf("-") === 0) {
+        weaponHash = weaponHash.substr(1);
+      }
+
+      const weaponKey = items[0].substr(3);
+      const notes = items[1].substr(8).trim();
+      rolls[weaponKey] = {};
+      rolls[weaponKey]["name"] = weaponMap[weaponHash];
+      rolls[weaponKey]["notes"] = notes;
+      rolls[weaponKey]["rolls"] = weaponRolls;
+    }
   }
 }
 

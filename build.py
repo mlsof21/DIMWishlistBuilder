@@ -32,6 +32,7 @@ def zip_files(files: List[str], browser: str):
             manifest = json.load(open(f))
             if browser == "firefox":
                 manifest["manifest_version"] = 2
+                manifest["permissions"].append("https://www.bungie.net/*")
             
             zf.writestr(f[2:], json.dumps(manifest, indent=2))
         else:

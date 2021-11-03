@@ -5,20 +5,10 @@
   "manifest_version": 3,
   "content_scripts": [
     {
-      "matches": [
-        "http://d2gunsmith.com/*",
-        "https://d2gunsmith.com/*"
-      ],
-      "js": [
-        "src/js/content.js"
-      ],
-      "css": [
-        "src/css/styles.css"
-      ]
+      "matches": ["http://d2gunsmith.com/*", "https://d2gunsmith.com/*"],
+      "js": ["src/js/content.js"],
+      "css": ["src/css/styles.css"]
     }
   ],
-  "permissions": [
-    "storage",
-    "*://www.bungie.net/*"
-  ]
+  "permissions": ["storage"]
 }
