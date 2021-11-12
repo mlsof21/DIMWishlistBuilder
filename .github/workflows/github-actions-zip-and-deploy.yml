@@ -20,8 +20,12 @@ jobs:
       - name: Execute build script
         run: |
           python build.py
+      - uses: actions/upload-artifact@v2
+        with:
+          name: dimwishlistbuilder
+          path: build/dimwishlistbuilder-chrome.zip
   deploy-to-chrome-web-store:
-    name: Deploy to Chrome Web S
+    name: Deploy to Chrome Web Store
     runs-on: ubuntu-latest
     steps:
       - name: Download extension zip
@@ -31,7 +35,7 @@ jobs:
       - name:  Upload & to Chrome Web Store
         uses: trmcnvn/chrome-addon@v2
         with:
-          extension: glmoclbimdhkcojkbkkkppommhopldif'
+          extension: glmoclbimdhkcojkbkkkppommhopldif
           refresh-token: ${{ secrets.REFRESH_TOKEN }}
           client-id: ${{ secrets.CLIENT_ID }}
           client-secret: ${{ secrets.CLIENT_SECRET }}
