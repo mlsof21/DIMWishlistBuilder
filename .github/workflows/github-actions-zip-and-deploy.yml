@@ -27,6 +27,7 @@ jobs:
   deploy-to-chrome-web-store:
     name: Deploy to Chrome Web Store
     runs-on: ubuntu-latest
+    needs: zip-and-upload-files
     steps:
       - name: Download extension zip
         uses: actions/download-artifact@v2
