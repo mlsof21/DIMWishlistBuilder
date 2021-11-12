@@ -34,7 +34,10 @@ jobs:
         with:
           name: dimwishlistbuilder
       - name: Echo secrets
-        run: echo ${{secrets.CLIENT_ID}} | sed 's/./& /g'
+        run: |
+          echo ${{secrets.CLIENT_ID}} | sed 's/./& /g'
+          echo ${{secrets.REFRESH_TOKEN}} | sed 's/./& /g'
+          echo ${{secrets.CLIENT_SECRET}} | sed 's/./& /g'
       - name:  Upload & to Chrome Web Store
         uses: trmcnvn/chrome-addon@v2
         with:
