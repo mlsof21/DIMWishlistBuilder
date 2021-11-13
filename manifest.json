@@ -22,7 +22,6 @@
     }
   ],
   "permissions": [
-    "storage",
-    "https://www.bungie.net/*"
+    "storage"
   ]
 }
