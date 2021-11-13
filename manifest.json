@@ -23,6 +23,6 @@
   ],
   "permissions": [
     "storage",
-    "*://www.bungie.net/*"
+    "https://www.bungie.net/*"
   ]
 }
