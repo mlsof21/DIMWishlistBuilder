@@ -1,5 +1,7 @@
+let storage = chrome.storage.local;
 let rolls = {};
 let addingEnabled = true;
+let shortcutKeys = "Insert";
 
 function copyToTextarea() {
   const wishlistText = document.querySelector("div > form > textarea");
@@ -57,7 +59,7 @@ function buildRollsForTextarea() {
 
 function setLocalStorage() {
   const json = JSON.stringify(rolls);
-  chrome.storage.local.set({ wishlistData: json }, () => {
+  storage.set({ wishlistData: json }, () => {
     console.log("wishlistData set to ", json);
   });
 }
@@ -205,8 +207,14 @@ function addEventListeners() {
   });
 }
 
-function pressShortcutKey(event) {
-  if (event.key === "Insert") {
+let keysPressed = {};
+
+function keydownShortcut(event) {
+  event.preventDefault();
+  keysPressed[event.key.toLowerCase()] = true;
+  console.log("keydown", event.key, { keysPressed });
+  if (isShortcutPressed()) {
+    console.log(`Shortcut (${shortcutKeys}) pressed`);
     if (addingEnabled) {
       copyToTextarea();
     } else {
@@ -216,6 +224,18 @@ function pressShortcutKey(event) {
       addWarning();
     }
   }
+}
+
+function keyupShortcut() {
+  keysPressed = {};
+}
+
+function isShortcutPressed() {
+  if (Object.keys(keysPressed).sort().join("+") === shortcutKeys) {
+    keysPressed = {};
+    return true;
+  }
+  return false;
 }
 
 function addWarning() {
@@ -260,20 +280,34 @@ function addElements() {
   root.appendChild(wishlistDiv);
   addEventListeners();
 
-  chrome.storage.local.get(["wishlistData"], (result) => {
+  storage.get(["wishlistData"], (result) => {
     const wishlistTextarea = document.getElementById("wishlistTextarea");
     console.log("Value is currently " + result.wishlistData);
     rolls = JSON.parse(result.wishlistData);
     wishlistTextarea.value = buildRollsForTextarea();
   });
 
-  document.addEventListener("keydown", pressShortcutKey);
+  getShortcutKeys();
+
+  document.addEventListener("keydown", keydownShortcut);
+  document.addEventListener("keyup", keyupShortcut);
 
   const span = contains("span", "Gunsmith")[0];
   span.parentElement.insertBefore(toggleButton, span);
 }
 
 let weaponMap = {};
+
+function getShortcutKeys() {
+  storage.get(["shortcutKeys"], (result) => {
+    if (result.shortcutKeys !== undefined) {
+      console.log("ShortcutKeys currently set to", result.shortcutKeys);
+      shortcutKeys = result.shortcutKeys;
+    } else {
+      storage.set({ shortcutKeys: shortcutKeys });
+    }
+  });
+}
 
 async function getManifest() {
   const response = await fetch(
@@ -315,4 +349,16 @@ observer.observe(document.body, {
   subtree: true,
   attributes: false,
   characterData: false,
+});
+
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  console.log(
+    sender.tab
+      ? "from a content script:" + sender.tab.url
+      : "from the extension"
+  );
+  if (request.shortcutUpdated === "The shortcut has been updated.")
+    sendResponse({ ack: "Acknowledged." });
+  getShortcutKeys();
+  return true;
 });
