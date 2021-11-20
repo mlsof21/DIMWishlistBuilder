@@ -1,0 +1,16 @@
+body {
+    width: 350px;
+    background-color: black;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+label, span {
+    font-size: 20px;
+}
+
+button {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column-reverse;
+}

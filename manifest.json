@@ -10,5 +10,10 @@
       "css": ["src/css/styles.css"]
     }
   ],
-  "permissions": ["storage"]
+  "permissions": ["storage"],
+  "action":{
+    "default_icon": "icon.png",
+    "default_popup": "src/html/options.html",
+    "default_title": "DIM Wishlist Builder"
+  }
 }
