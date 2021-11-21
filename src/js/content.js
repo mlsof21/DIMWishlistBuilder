@@ -2,16 +2,23 @@ let storage = chrome.storage.local;
 let rolls = {};
 let addingEnabled = true;
 let shortcutKeys = "Insert";
+let perkSelectedClass = "";
 
 function copyToTextarea() {
   const wishlistText = document.querySelector("div > form > textarea");
   const errorSpan = document.getElementById("wishlistErrors");
   const roll = wishlistText.value;
-  const typeOfRoll = getRollType();
+
+  const rollType = getRollType();
   const textarea = document.getElementById("wishlistTextarea");
   const weaponHash = roll.split("&")[0].substr(17);
   const weaponName = weaponMap[weaponHash];
-  const rollKey = `${weaponName} (${typeOfRoll})`;
+  const rollKey = `${weaponName} (${rollType})`;
+
+  if (perkSelectedClass === "") {
+    setSelectedClass(weaponHash, roll.split("&")[1].substr(6).split(",")[0]);
+    console.log({ perkSelectedClass });
+  }
 
   if (isRollInWishlist(roll, rollKey)) {
     errorSpan.classList.add("error");
@@ -21,7 +28,7 @@ function copyToTextarea() {
       rolls[rollKey] = {};
       rolls[rollKey]["name"] = weaponName;
       rolls[rollKey]["rolls"] = [];
-      rolls[rollKey]["notes"] = `${typeOfRoll}-`;
+      rolls[rollKey]["notes"] = `${rollType}-`;
     }
     rolls[rollKey]["rolls"].push(roll);
     let fullText = buildRollsForTextarea();
@@ -142,6 +149,66 @@ function isRollInWishlist(newRoll, weapon) {
   return false;
 }
 
+function setSelectedClass(itemId, perkId) {
+  const perkEle = document.querySelector(
+    `[data-for^=getContent-${itemId}_perk_${perkId}]`
+  );
+
+  if (isSelected(perkEle)) {
+    perkSelectedClass = perkEle.classList[perkEle.classList.length - 1];
+    chrome.storage.local.set({ perkSelectedClass: perkSelectedClass }, () => {
+      console.log("perkSelectedClass set to ", perkSelectedClass);
+    });
+  }
+}
+
+function selectCurrentRoll(e) {
+  const textarea = document.getElementById("wishlistTextarea");
+  const first = textarea.selectionStart;
+  const last = textarea.selectionEnd;
+  const selected = textarea.value.substring(first, last).trim();
+  const itemId = selected.split("&")[0].substr(17);
+  const perks = selected.split("&")[1].substr(6).split(",");
+  console.log({ itemId }, { perks });
+
+  if (
+    document.querySelector(`[data-for^=getContent-${itemId}_perk_${perks[0]}]`)
+  ) {
+    // Deselect the currently selected perks for the weapon
+    const selectedPerks = document.querySelectorAll(
+      `.${perkSelectedClass}[data-for*=column]`
+    );
+    for (const perk of selectedPerks) {
+      perk.click();
+    }
+  }
+
+  for (const perkId of perks) {
+    const perkEle = document.querySelector(
+      `[data-for^=getContent-${itemId}_perk_${perkId}]`
+    );
+
+    if (perkEle === null) {
+      console.log(
+        "No perk element found for this query selector:",
+        `[data-for^=getContent-${itemId}_perk_${perkId}]`
+      );
+      break;
+    }
+
+    if (!isSelected(perkEle)) {
+      perkEle.click();
+    }
+  }
+}
+
+function isSelected(perkEle) {
+  return (
+    window.getComputedStyle(perkEle, null).backgroundColor !==
+    "rgba(0, 0, 0, 0)"
+  );
+}
+
 function toggleWishlist(e) {
   e.stopPropagation();
   const div = document.getElementById("wishlistDiv");
@@ -205,6 +272,9 @@ function addEventListeners() {
 
     downloadToFile(textArea.value, "dim-wishlist.txt", "text/plain");
   });
+
+  const selectButton = document.getElementById("selectPerksButton");
+  selectButton.addEventListener("click", selectCurrentRoll, false);
 }
 
 let keysPressed = {};
@@ -262,6 +332,7 @@ function addElements() {
 			<div id="addToWishlistButton" class="wishlistButton">Add to Wishlist</div>
     	<div id="copyToClipboardButton" class="wishlistButton">Copy to Clipboard</div>
 			<div id="saveToFileButton" class="wishlistButton">Save to File</div>
+      <div id="selectPerksButton" class="wishlistButton">Select Perks</div>
 			<div class="radios" id="typeRadios">
 				<input type="radio" name="rollType" id="PvE" value="PvE" checked>
 				<label for="PvE">PvE</label>
@@ -282,7 +353,7 @@ function addElements() {
 
   storage.get(["wishlistData"], (result) => {
     const wishlistTextarea = document.getElementById("wishlistTextarea");
-    console.log("Value is currently " + result.wishlistData);
+    console.log("WishlistData is currently " + result.wishlistData);
     rolls = JSON.parse(result.wishlistData);
     wishlistTextarea.value = buildRollsForTextarea();
   });
@@ -291,6 +362,12 @@ function addElements() {
 
   document.addEventListener("keydown", keydownShortcut);
   document.addEventListener("keyup", keyupShortcut);
+
+  chrome.storage.local.get(["perkSelectedClass"], (result) => {
+    perkSelectedClass = result.perkSelectedClass;
+    console.log("perkSelectedClass is currently", result.perkSelectedClass);
+  });
+  document.addEventListener("keydown", pressShortcutKey);
 
   const span = contains("span", "Gunsmith")[0];
   span.parentElement.insertBefore(toggleButton, span);
