@@ -1,5 +1,6 @@
 let storage = chrome.storage.local;
 let rolls = {};
+let weaponMap = {};
 let addingEnabled = true;
 let shortcutKeys = "Insert";
 let perkSelectedClass = "";
@@ -162,6 +163,21 @@ function setSelectedClass(itemId, perkId) {
   }
 }
 
+function onSelectionChange(e) {
+  console.log(e);
+  const perkButton = document.getElementById("selectPerksButton");
+  const first = textarea.selectionStart;
+  const last = textarea.selectionEnd;
+  const selected = textarea.value.substring(first, last).trim();
+  const itemId = selected.split("&")[0].substr(17);
+  const perks = selected.split("&")[1].substr(6).split(",");
+  if (itemId && perks.length > 0) {
+    perkButton.disabled = false;
+  } else {
+    perkButton.disabled = true;
+  }
+}
+
 function selectCurrentRoll(e) {
   const textarea = document.getElementById("wishlistTextarea");
   const first = textarea.selectionStart;
@@ -265,6 +281,11 @@ function addEventListeners() {
 
   const wishlistTextarea = document.getElementById("wishlistTextarea");
   wishlistTextarea.addEventListener("input", onTextareaInput, false);
+  wishlistTextarea.addEventListener(
+    "onselectionchange",
+    onSelectionChange,
+    false
+  );
 
   const saveToFilebutton = document.getElementById("saveToFileButton");
   saveToFilebutton.addEventListener("click", () => {
@@ -275,6 +296,9 @@ function addEventListeners() {
 
   const selectButton = document.getElementById("selectPerksButton");
   selectButton.addEventListener("click", selectCurrentRoll, false);
+
+  document.addEventListener("keydown", keydownShortcut);
+  document.addEventListener("keyup", keyupShortcut);
 }
 
 let keysPressed = {};
@@ -360,9 +384,6 @@ function addElements() {
 
   getShortcutKeys();
 
-  document.addEventListener("keydown", keydownShortcut);
-  document.addEventListener("keyup", keyupShortcut);
-
   chrome.storage.local.get(["perkSelectedClass"], (result) => {
     perkSelectedClass = result.perkSelectedClass;
     console.log("perkSelectedClass is currently", result.perkSelectedClass);
@@ -372,8 +393,6 @@ function addElements() {
   const span = contains("span", "Gunsmith")[0];
   span.parentElement.insertBefore(toggleButton, span);
 }
-
-let weaponMap = {};
 
 function getShortcutKeys() {
   storage.get(["shortcutKeys"], (result) => {
@@ -393,15 +412,15 @@ async function getManifest() {
   );
   const responseJson = await response.json();
 
-  const jsonWorld = responseJson["Response"]["jsonWorldContentPaths"]["en"];
-  const fullManifest = await fetch("https://www.bungie.net" + jsonWorld);
-  const fullManifestJson = await fullManifest.json();
+  const jsonWorld =
+    responseJson["Response"]["jsonWorldComponentContentPaths"]["en"][
+      "DestinyInventoryItemDefinition"
+    ];
+  const itemManifest = await fetch("https://www.bungie.net" + jsonWorld);
+  const itemManifestJson = await itemManifest.json();
 
-  for (const hash in fullManifestJson.DestinyInventoryItemDefinition) {
-    weaponMap[hash] =
-      fullManifestJson.DestinyInventoryItemDefinition[
-        hash
-      ].displayProperties.name;
+  for (const hash in itemManifestJson) {
+    weaponMap[hash] = itemManifestJson[hash].displayProperties.name;
   }
 }
 
