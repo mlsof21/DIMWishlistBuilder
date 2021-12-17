@@ -24,7 +24,7 @@ function keyupUpdateShortcut(e) {
   document.getElementById("shortcut").innerText =
     Object.keys(shortcutKeys).sort().join("+");
 
-  storage.set({ shortcutKeys: Object.keys(shortcutKeys).join("+") });
+  storage.set({ shortcutKeys: Object.keys(shortcutKeys).sort().join("+") });
   window.removeEventListener("keyup", keyupUpdateShortcut);
   const shortcutButton = document.getElementById("shortcutButton");
   shortcutButton.innerText = "Update Shortcut";

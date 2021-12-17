@@ -4,16 +4,17 @@ let weaponMap = {};
 let addingEnabled = true;
 let shortcutKeys = "Insert";
 let perkSelectedClass = "";
+let currentWeapon = "";
+let alertShown = false;
 
 function copyToTextarea() {
-  const wishlistText = document.querySelector("div > form > textarea");
   const errorSpan = document.getElementById("wishlistErrors");
-  const roll = wishlistText.value;
 
   const rollType = getRollType();
   const textarea = document.getElementById("wishlistTextarea");
-  const weaponHash = roll.split("&")[0].substr(17);
-  const weaponName = weaponMap[weaponHash];
+  const { weaponName, weaponHash, roll } = getRollInfo();
+  currentWeapon = weaponName;
+
   const rollKey = `${weaponName} (${rollType})`;
 
   if (perkSelectedClass === "") {
@@ -40,11 +41,18 @@ function copyToTextarea() {
     textarea.focus();
     textarea.setSelectionRange(startHighlight, startHighlight + roll.length);
 
-    setLocalStorage(fullText);
+    setLocalStorage("wishlistData", JSON.stringify(rolls));
 
     errorSpan.classList.remove("error");
     errorSpan.innerText = "";
   }
+}
+
+function getRollInfo() {
+  const wishlistText = document.querySelector("div > form > textarea");
+  const roll = wishlistText.value;
+  const weaponHash = roll.split("&")[0].substr(17);
+  return { weaponName: weaponMap[weaponHash], roll, weaponHash };
 }
 
 function getRollType() {
@@ -65,10 +73,22 @@ function buildRollsForTextarea() {
   return fullText;
 }
 
-function setLocalStorage() {
-  const json = JSON.stringify(rolls);
-  storage.set({ wishlistData: json }, () => {
-    console.log("wishlistData set to ", json);
+function setLocalStorage(key, value) {
+  storage.set({ key: value }, () => {
+    console.log(`${key} set to ${value}`);
+  });
+}
+
+async function getLocalStorage(key) {
+  return new Promise((resolve, reject) => {
+    storage.get([key], (result) => {
+      console.log(`${key} currently set to ${result[key]}`);
+      try {
+        resolve(JSON.parse(result[key]));
+      } catch (e) {
+        resolve(result[key]);
+      }
+    });
   });
 }
 
@@ -76,7 +96,7 @@ let timeout = null;
 function onTextareaInput(e) {
   clearTimeout(timeout);
   const addButton = document.getElementById("addToWishlistButton");
-  disableAddButton(addButton, copyToTextarea);
+  disableButton(addButton, copyToTextarea, false, "Updating...Please Wait");
   timeout = setTimeout(() => {
     console.log(
       "User has stopped typing. Parsing the textarea and updating localStorage."
@@ -84,23 +104,25 @@ function onTextareaInput(e) {
 
     parseTextarea();
     buildRollsForTextarea();
-    setLocalStorage();
-    enableAddButton(addButton, copyToTextarea);
+    setLocalStorage("wishlistData", JSON.stringify(rolls));
+    enableButton(addButton, copyToTextarea, true, "Add to Wishlist");
   }, 2000);
 }
 
-function disableAddButton(button, func) {
+function disableButton(button, func, adding = false, newText = "") {
+  console.log(button.id, "disabled");
   button.classList.add("disabled");
   button.removeEventListener("click", func);
-  button.innerText = "Updating...Please wait";
-  addingEnabled = false;
+  button.innerText = newText === "" ? button.innerText : newText;
+  addingEnabled = adding;
 }
 
-function enableAddButton(button, func) {
+function enableButton(button, func, adding = true, newText = "") {
+  console.log(button.id, "enabled");
   button.classList.remove("disabled");
   button.addEventListener("click", func);
-  button.innerText = "Add to Wishlist";
-  addingEnabled = true;
+  button.innerText = newText === "" ? button.innerText : newText;
+  addingEnabled = adding;
 }
 
 function parseTextarea() {
@@ -163,18 +185,54 @@ function setSelectedClass(itemId, perkId) {
   }
 }
 
-function onSelectionChange(e) {
-  console.log(e);
+function onSelect(e) {
+  console.log("Selection changed");
   const perkButton = document.getElementById("selectPerksButton");
+  const textarea = e.target;
   const first = textarea.selectionStart;
   const last = textarea.selectionEnd;
-  const selected = textarea.value.substring(first, last).trim();
-  const itemId = selected.split("&")[0].substr(17);
-  const perks = selected.split("&")[1].substr(6).split(",");
+  const { itemId, perks } = getItemIdAndPerksFromSelection(
+    textarea.value.substring(first, last).trim()
+  );
+
   if (itemId && perks.length > 0) {
-    perkButton.disabled = false;
+    if (isCurrentWeapon(itemId)) {
+      enableButton(perkButton, selectCurrentRoll, true);
+    } else {
+      disableButton(perkButton, selectCurrentRoll, true);
+      if (!alertShown) {
+        alert(
+          "Please search the weapon for the current selection if you would like to highlight the perks."
+        );
+        alertShown = true;
+      }
+    }
   } else {
-    perkButton.disabled = true;
+    disableButton(perkButton, selectCurrentRoll, true);
+  }
+}
+
+function isCurrentWeapon(itemId) {
+  const { weaponName } = getRollInfo();
+  return weaponName === weaponMap[itemId];
+}
+
+function getItemIdAndPerksFromSelection(selection) {
+  try {
+    const item = selection.split("&")[0];
+    const itemId = item.split("=")[1];
+    let perks = [];
+    if (selection.split("&").length > 1) {
+      perks = selection
+        .split("&")[1]
+        .substr(6)
+        .split(",")
+        .filter((p) => p);
+    }
+    return { itemId, perks };
+  } catch (error) {
+    console.error(error);
+    return { itemId: null, perks: null };
   }
 }
 
@@ -281,14 +339,10 @@ function addEventListeners() {
 
   const wishlistTextarea = document.getElementById("wishlistTextarea");
   wishlistTextarea.addEventListener("input", onTextareaInput, false);
-  wishlistTextarea.addEventListener(
-    "onselectionchange",
-    onSelectionChange,
-    false
-  );
+  wishlistTextarea.addEventListener("select", onSelect, false);
 
-  const saveToFilebutton = document.getElementById("saveToFileButton");
-  saveToFilebutton.addEventListener("click", () => {
+  const saveToFileButton = document.getElementById("saveToFileButton");
+  saveToFileButton.addEventListener("click", () => {
     const textArea = document.getElementById("wishlistTextarea");
 
     downloadToFile(textArea.value, "dim-wishlist.txt", "text/plain");
@@ -304,10 +358,10 @@ function addEventListeners() {
 let keysPressed = {};
 
 function keydownShortcut(event) {
-  event.preventDefault();
   keysPressed[event.key.toLowerCase()] = true;
   console.log("keydown", event.key, { keysPressed });
   if (isShortcutPressed()) {
+    event.preventDefault();
     console.log(`Shortcut (${shortcutKeys}) pressed`);
     if (addingEnabled) {
       copyToTextarea();
@@ -375,34 +429,21 @@ function addElements() {
   root.appendChild(wishlistDiv);
   addEventListeners();
 
-  storage.get(["wishlistData"], (result) => {
+  getLocalStorage("wishlistData").then((result) => {
+    rolls = result;
     const wishlistTextarea = document.getElementById("wishlistTextarea");
-    console.log("WishlistData is currently " + result.wishlistData);
-    rolls = JSON.parse(result.wishlistData);
     wishlistTextarea.value = buildRollsForTextarea();
   });
 
-  getShortcutKeys();
+  getLocalStorage("shortcutKeys").then((result) => (shortcutKeys = result));
 
-  chrome.storage.local.get(["perkSelectedClass"], (result) => {
+  storage.get(["perkSelectedClass"], (result) => {
     perkSelectedClass = result.perkSelectedClass;
     console.log("perkSelectedClass is currently", result.perkSelectedClass);
   });
-  document.addEventListener("keydown", pressShortcutKey);
 
   const span = contains("span", "Gunsmith")[0];
   span.parentElement.insertBefore(toggleButton, span);
-}
-
-function getShortcutKeys() {
-  storage.get(["shortcutKeys"], (result) => {
-    if (result.shortcutKeys !== undefined) {
-      console.log("ShortcutKeys currently set to", result.shortcutKeys);
-      shortcutKeys = result.shortcutKeys;
-    } else {
-      storage.set({ shortcutKeys: shortcutKeys });
-    }
-  });
 }
 
 async function getManifest() {
@@ -426,8 +467,8 @@ async function getManifest() {
 
 getManifest();
 
-let observer = new MutationObserver((mutations) => {
-  mutations.forEach((mutation) => {
+let observer = new MutationObserver(async (mutations) => {
+  mutations.forEach(async (mutation) => {
     if (!mutation.addedNodes) return;
 
     for (let i = 0; i < mutation.addedNodes.length; i++) {
@@ -447,7 +488,11 @@ observer.observe(document.body, {
   characterData: false,
 });
 
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(async function (
+  request,
+  sender,
+  sendResponse
+) {
   console.log(
     sender.tab
       ? "from a content script:" + sender.tab.url
@@ -455,6 +500,6 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   );
   if (request.shortcutUpdated === "The shortcut has been updated.")
     sendResponse({ ack: "Acknowledged." });
-  getShortcutKeys();
+  getLocalStorage("shortcutKeys").then((result) => (shortcutKeys = result));
   return true;
 });
