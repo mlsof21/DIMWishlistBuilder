@@ -1,6 +1,6 @@
 {
   "name": "dimwishlistbuilder",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Build a DIM wishlist with D2Gunsmith.com",
   "main": "src/js/content.js",
   "type": "module",

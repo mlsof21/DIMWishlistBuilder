@@ -199,8 +199,8 @@ function addEventListeners() {
   const wishlistTextarea = document.getElementById("wishlistTextarea");
   wishlistTextarea.addEventListener("input", onTextareaInput, false);
 
-  const saveToFilebutton = document.getElementById("saveToFileButton");
-  saveToFilebutton.addEventListener("click", () => {
+  const saveToFileButton = document.getElementById("saveToFileButton");
+  saveToFileButton.addEventListener("click", () => {
     const textArea = document.getElementById("wishlistTextarea");
 
     downloadToFile(textArea.value, "dim-wishlist.txt", "text/plain");
@@ -210,7 +210,6 @@ function addEventListeners() {
 let keysPressed = {};
 
 function keydownShortcut(event) {
-  event.preventDefault();
   keysPressed[event.key.toLowerCase()] = true;
   console.log("keydown", event.key, { keysPressed });
   if (isShortcutPressed()) {
