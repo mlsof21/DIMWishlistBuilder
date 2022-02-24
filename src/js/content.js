@@ -1,17 +1,28 @@
 let storage = chrome.storage.local;
 let rolls = {};
 let addingEnabled = true;
-let shortcutKeys = "Insert";
+let shortcutKeys = "insert";
 
 function copyToTextarea() {
-  const wishlistText = document.querySelector("div > form > textarea");
+  // const wishlistText = document.querySelector("div > form > textarea");
+  const plugs = document.querySelectorAll('.vanity .plug')
+  const activePlugs = [...plugs].slice(1);
+  const perkHashes = [];
+  activePlugs.filter(x => x.style.backgroundImage !== "").forEach(plug => {
+    const backgroundImage = plug.style.backgroundImage;
+    const iconPath = backgroundImage.substring(27, backgroundImage.length - 2);
+    perkHashes.push(plugMap[iconPath]);
+  });
+
   const errorSpan = document.getElementById("wishlistErrors");
-  const roll = wishlistText.value;
   const typeOfRoll = getRollType();
   const textarea = document.getElementById("wishlistTextarea");
-  const weaponHash = roll.split("&")[0].substr(17);
+  const weaponBgImg = document.querySelector('.weapon-name .icon').style.backgroundImage;
+  const imgSrc = weaponBgImg.substring(27, weaponBgImg.length - 2);
+  const weaponHash = plugMap[imgSrc];
   const weaponName = weaponMap[weaponHash];
   const rollKey = `${weaponName} (${typeOfRoll})`;
+  const roll = wishliistTextBuilder(weaponHash, perkHashes);
 
   if (isRollInWishlist(roll, rollKey)) {
     errorSpan.classList.add("error");
@@ -37,6 +48,12 @@ function copyToTextarea() {
     errorSpan.classList.remove("error");
     errorSpan.innerText = "";
   }
+}
+
+function wishliistTextBuilder(weaponHash, perkHashes) {
+  const perkString = "perks=" + perkHashes.join(",");
+  const weaponString = "dimwishlist:item=" + weaponHash;
+  return `${weaponString}&${perkString}`;
 }
 
 function getRollType() {
@@ -210,7 +227,7 @@ function addEventListeners() {
 let keysPressed = {};
 
 function keydownShortcut(event) {
-  event.preventDefault();
+  // event.preventDefault();
   keysPressed[event.key.toLowerCase()] = true;
   console.log("keydown", event.key, { keysPressed });
   if (isShortcutPressed()) {
@@ -226,12 +243,14 @@ function keydownShortcut(event) {
   }
 }
 
-function keyupShortcut() {
-  keysPressed = {};
+function keyupShortcut(event) {
+  delete keysPressed[event.key.toLowerCase()]
+  console.log("keyup", event.key, { keysPressed });
 }
 
 function isShortcutPressed() {
   if (Object.keys(keysPressed).sort().join("+") === shortcutKeys) {
+    console.log("Shortcut was pressed");
     keysPressed = {};
     return true;
   }
@@ -253,7 +272,7 @@ function removeWarning() {
 }
 
 function addElements() {
-  const root = document.getElementById("root");
+  const main = document.getElementsByTagName("main")[0];
 
   const wishlistDiv = document.createElement("div");
   wishlistDiv.id = "wishlistDiv";
@@ -271,20 +290,22 @@ function addElements() {
 				<label for="GM">GM</label>
 			</div>
 		</div>
-    <textarea cols="90" rows="50" id="wishlistTextarea" spellcheck="false"></textarea>
+    <textarea cols="50" rows="50" id="wishlistTextarea" spellcheck="false"></textarea>
     <span id="wishlistErrors"></span>   
   `;
 
   const toggleButton = getToggleButton();
 
-  root.appendChild(wishlistDiv);
+  main.appendChild(wishlistDiv);
   addEventListeners();
 
   storage.get(["wishlistData"], (result) => {
     const wishlistTextarea = document.getElementById("wishlistTextarea");
     console.log("Value is currently " + result.wishlistData);
-    rolls = JSON.parse(result.wishlistData);
-    wishlistTextarea.value = buildRollsForTextarea();
+    if (result.wishlistData) {
+      rolls = JSON.parse(result.wishlistData);
+      wishlistTextarea.value = buildRollsForTextarea();
+    }
   });
 
   getShortcutKeys();
@@ -292,11 +313,15 @@ function addElements() {
   document.addEventListener("keydown", keydownShortcut);
   document.addEventListener("keyup", keyupShortcut);
 
-  const span = contains("span", "Gunsmith")[0];
-  span.parentElement.insertBefore(toggleButton, span);
+  // const span = contains("span", "Gunsmith")[0];
+  const searchDiv = document.querySelector('.search');
+  searchDiv.parentElement.insertBefore(toggleButton, searchDiv);
+
+  observer.disconnect();
 }
 
 let weaponMap = {};
+let plugMap = {};
 
 function getShortcutKeys() {
   storage.get(["shortcutKeys"], (result) => {
@@ -325,6 +350,16 @@ async function getManifest() {
       fullManifestJson.DestinyInventoryItemDefinition[
         hash
       ].displayProperties.name;
+
+
+    if (fullManifestJson.DestinyInventoryItemDefinition[hash].displayProperties.hasIcon) {
+      const iconPath = fullManifestJson.DestinyInventoryItemDefinition[hash].displayProperties.icon;
+      plugMap[iconPath] = fullManifestJson.DestinyInventoryItemDefinition[hash].hash;
+    }
+  }
+
+  for (const hash in fullManifestJson.DestinyPlugItemDefinition) {
+
   }
 }
 
@@ -336,7 +371,8 @@ let observer = new MutationObserver((mutations) => {
 
     for (let i = 0; i < mutation.addedNodes.length; i++) {
       let node = mutation.addedNodes[i];
-      if (node.nodeName.toLowerCase() == "main") {
+      let classList = node.classList;
+      if (classList.contains('perks')) {
         addElements();
         break;
       }

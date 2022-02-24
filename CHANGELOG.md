@@ -1,6 +1,11 @@
-**1.0.6 - TBD**
+**1.1.1 - February 23, 2022**
 
-* TO BE FILLED IN
+* Fixed initial shortcut being "Insert" rather than "insert". Casing matters.
+
+**1.1.0 - February 23, 2022**
+
+* Added ability to customize shortcut
+* Fixed compatibility with D2Gunsmith
 
 **1.0.5 - October 25, 2021**
 
