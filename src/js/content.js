@@ -353,6 +353,8 @@ async function getManifest() {
 
 
     if (fullManifestJson.DestinyInventoryItemDefinition[hash].displayProperties.hasIcon) {
+      const traitType = fullManifestJson.DestinyInventoryItemDefinition[hash].itemTypeDisplayName;
+      if(traitType.includes("Enhanced")) continue;
       const iconPath = fullManifestJson.DestinyInventoryItemDefinition[hash].displayProperties.icon;
       plugMap[iconPath] = fullManifestJson.DestinyInventoryItemDefinition[hash].hash;
     }
