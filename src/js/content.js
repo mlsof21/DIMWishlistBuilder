@@ -117,7 +117,7 @@ function parseTextarea() {
   const weapons = text.split("\n\n").filter((t) => t);
   rolls = {};
   for (const weapon of weapons) {
-    const items = weapon.split("\n");
+    const items = weapon.trim().split("\n");
     const weaponRolls = items.slice(2);
 
     //Don't add back a weapon if it doesn't have any rolls
