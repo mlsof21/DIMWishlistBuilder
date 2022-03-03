@@ -26,9 +26,10 @@
   ],
   "author": "Matthew Sherrill",
   "license": "MIT",
-  "devDependencies": {    
+  "devDependencies": {
     "eslint": "^8.0.1",
-    "jest": "^27.3.1"
+    "jest": "^27.3.1",
+    "prettier": "2.5.1"
   },
   "dependencies": {
     "source-map-loader": "^3.0.0",
