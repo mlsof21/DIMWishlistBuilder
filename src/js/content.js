@@ -1,23 +1,29 @@
 let storage = chrome.storage.local;
 let rolls = {};
 let addingEnabled = true;
-let shortcutKeys = "insert";
+let shortcutKeys = 'insert';
 
 function copyToTextarea() {
   // const wishlistText = document.querySelector("div > form > textarea");
-  const plugs = document.querySelectorAll('.vanity .plug')
+  const plugs = document.querySelectorAll('.vanity .plug');
   const activePlugs = [...plugs].slice(1);
   const perkHashes = [];
-  activePlugs.filter(x => x.style.backgroundImage !== "").forEach(plug => {
-    const backgroundImage = plug.style.backgroundImage;
-    const iconPath = backgroundImage.substring(27, backgroundImage.length - 2);
-    perkHashes.push(plugMap[iconPath]);
-  });
+  activePlugs
+    .filter((x) => x.style.backgroundImage !== '')
+    .forEach((plug) => {
+      const backgroundImage = plug.style.backgroundImage;
+      const iconPath = backgroundImage.substring(
+        27,
+        backgroundImage.length - 2
+      );
+      perkHashes.push(plugMap[iconPath]);
+    });
 
-  const errorSpan = document.getElementById("wishlistErrors");
+  const errorSpan = document.getElementById('wishlistErrors');
   const typeOfRoll = getRollType();
-  const textarea = document.getElementById("wishlistTextarea");
-  const weaponBgImg = document.querySelector('.weapon-name .icon').style.backgroundImage;
+  const textarea = document.getElementById('wishlistTextarea');
+  const weaponBgImg =
+    document.querySelector('.weapon-name .icon').style.backgroundImage;
   const imgSrc = weaponBgImg.substring(27, weaponBgImg.length - 2);
   const weaponHash = plugMap[imgSrc];
   const weaponName = weaponMap[weaponHash];
@@ -25,16 +31,16 @@ function copyToTextarea() {
   const roll = wishliistTextBuilder(weaponHash, perkHashes);
 
   if (isRollInWishlist(roll, rollKey)) {
-    errorSpan.classList.add("error");
-    errorSpan.innerText = "This roll already exists in wishlist.";
+    errorSpan.classList.add('error');
+    errorSpan.innerText = 'This roll already exists in wishlist.';
   } else {
     if (!(rollKey in rolls)) {
       rolls[rollKey] = {};
-      rolls[rollKey]["name"] = weaponName;
-      rolls[rollKey]["rolls"] = [];
-      rolls[rollKey]["notes"] = `${typeOfRoll}-`;
+      rolls[rollKey]['name'] = weaponName;
+      rolls[rollKey]['rolls'] = [];
+      rolls[rollKey]['notes'] = `${typeOfRoll}-`;
     }
-    rolls[rollKey]["rolls"].push(roll);
+    rolls[rollKey]['rolls'].push(roll);
     let fullText = buildRollsForTextarea();
     textarea.value = fullText;
 
@@ -45,31 +51,31 @@ function copyToTextarea() {
 
     setLocalStorage(fullText);
 
-    errorSpan.classList.remove("error");
-    errorSpan.innerText = "";
+    errorSpan.classList.remove('error');
+    errorSpan.innerText = '';
   }
 }
 
 function wishliistTextBuilder(weaponHash, perkHashes) {
-  const perkString = "perks=" + perkHashes.join(",");
-  const weaponString = "dimwishlist:item=" + weaponHash;
+  const perkString = 'perks=' + perkHashes.join(',');
+  const weaponString = 'dimwishlist:item=' + weaponHash;
   return `${weaponString}&${perkString}`;
 }
 
 function getRollType() {
-  const checkedRadio = document.querySelector("input[name=rollType]:checked");
+  const checkedRadio = document.querySelector('input[name=rollType]:checked');
   return checkedRadio.value;
 }
 
 function buildRollsForTextarea() {
-  let fullText = "";
+  let fullText = '';
   for (var weaponKey in rolls) {
     fullText += `// ${weaponKey}\n`;
-    fullText += `//notes:${rolls[weaponKey]["notes"]}\n`;
-    for (const roll of rolls[weaponKey]["rolls"]) {
+    fullText += `//notes:${rolls[weaponKey]['notes']}\n`;
+    for (const roll of rolls[weaponKey]['rolls']) {
       fullText += `${roll}\n`;
     }
-    fullText += "\n";
+    fullText += '\n';
   }
   return fullText;
 }
@@ -77,18 +83,18 @@ function buildRollsForTextarea() {
 function setLocalStorage() {
   const json = JSON.stringify(rolls);
   storage.set({ wishlistData: json }, () => {
-    console.log("wishlistData set to ", json);
+    console.log('wishlistData set to ', json);
   });
 }
 
 let timeout = null;
 function onTextareaInput(e) {
   clearTimeout(timeout);
-  const addButton = document.getElementById("addToWishlistButton");
+  const addButton = document.getElementById('addToWishlistButton');
   disableAddButton(addButton, copyToTextarea);
   timeout = setTimeout(() => {
     console.log(
-      "User has stopped typing. Parsing the textarea and updating localStorage."
+      'User has stopped typing. Parsing the textarea and updating localStorage.'
     );
 
     parseTextarea();
@@ -99,58 +105,69 @@ function onTextareaInput(e) {
 }
 
 function disableAddButton(button, func) {
-  button.classList.add("disabled");
-  button.removeEventListener("click", func);
-  button.innerText = "Updating...Please wait";
+  button.classList.add('disabled');
+  button.removeEventListener('click', func);
+  button.innerText = 'Updating...Please wait';
   addingEnabled = false;
 }
 
 function enableAddButton(button, func) {
-  button.classList.remove("disabled");
-  button.addEventListener("click", func);
-  button.innerText = "Add to Wishlist";
+  button.classList.remove('disabled');
+  button.addEventListener('click', func);
+  button.innerText = 'Add to Wishlist';
   addingEnabled = true;
 }
 
 function parseTextarea() {
-  const text = document.getElementById("wishlistTextarea").value;
-  const weapons = text.split("\n\n").filter((t) => t);
+  const text = document.getElementById('wishlistTextarea').value;
+  const weapons = text.split('\n\n').filter((t) => t);
   rolls = {};
   for (const weapon of weapons) {
-    const items = weapon.trim().split("\n");
-    const weaponRolls = items.slice(2);
+    const items = weapon.trim().split('\n');
+    let weaponKey = '';
+    let weaponHash = '';
+    let notes = '';
+    const weaponRolls = [];
+    for (let item of items) {
+      item = item.trim();
 
-    //Don't add back a weapon if it doesn't have any rolls
+      if (item.startsWith('// ')) {
+        weaponKey = item.substr(3);
+      }
+      if (item.startsWith('dimwishlist')) {
+        weaponRolls.push(item);
+      }
+      if (item.startsWith('//notes:')) {
+        notes = item.substr(8).trim();
+      }
+    }
     if (weaponRolls && weaponRolls.length > 0) {
-      let weaponHash =
-        weaponRolls[0].indexOf("&") >= 0
-          ? weaponRolls[0].split("&")[0].substr(17)
+      weaponHash =
+        weaponRolls[0].indexOf('&') >= 0
+          ? weaponRolls[0].split('&')[0].substr(17)
           : weaponRolls[0].substr(17);
-      if (weaponHash.indexOf("-") === 0) {
+      if (weaponHash.indexOf('-') === 0) {
         weaponHash = weaponHash.substr(1);
       }
-
-      const weaponKey = items[0].substr(3);
-      const notes = items[1].substr(8).trim();
-      rolls[weaponKey] = {};
-      rolls[weaponKey]["name"] = weaponMap[weaponHash];
-      rolls[weaponKey]["notes"] = notes;
-      rolls[weaponKey]["rolls"] = weaponRolls;
     }
+    rolls[weaponKey] = {};
+    rolls[weaponKey]['name'] = weaponMap[weaponHash];
+    rolls[weaponKey]['notes'] = notes;
+    rolls[weaponKey]['rolls'] = weaponRolls;
   }
 }
 
 async function copyWishlistToClipboard() {
-  const wishlistText = document.getElementById("wishlistTextarea").value;
-  const copyButton = document.getElementById("copyToClipboardButton");
-  copyButton.innerText = "Copied!";
-  setTimeout(() => (copyButton.innerText = "Copy to Clipboard"), 2000);
+  const wishlistText = document.getElementById('wishlistTextarea').value;
+  const copyButton = document.getElementById('copyToClipboardButton');
+  copyButton.innerText = 'Copied!';
+  setTimeout(() => (copyButton.innerText = 'Copy to Clipboard'), 2000);
   await navigator.clipboard.writeText(wishlistText);
 }
 
 function isRollInWishlist(newRoll, weapon) {
   if (weapon in rolls) {
-    for (const roll of rolls[weapon]["rolls"]) {
+    for (const roll of rolls[weapon]['rolls']) {
       if (newRoll === roll) {
         return true;
       }
@@ -161,14 +178,14 @@ function isRollInWishlist(newRoll, weapon) {
 
 function toggleWishlist(e) {
   e.stopPropagation();
-  const div = document.getElementById("wishlistDiv");
-  const button = document.getElementById("toggleWishlistButton");
-  if (div.style.display === "flex") {
-    div.style.display = "none";
-    button.innerText = "Show Wishlist";
+  const div = document.getElementById('wishlistDiv');
+  const button = document.getElementById('toggleWishlistButton');
+  if (div.style.display === 'flex') {
+    div.style.display = 'none';
+    button.innerText = 'Show Wishlist';
   } else {
-    div.style.display = "flex";
-    button.innerText = "Hide Wishlist";
+    div.style.display = 'flex';
+    button.innerText = 'Hide Wishlist';
   }
 }
 
@@ -180,17 +197,17 @@ function contains(selector, text) {
 }
 
 function getToggleButton() {
-  const toggleButton = document.createElement("div");
-  toggleButton.id = "toggleWishlistButton";
-  toggleButton.innerText = "Hide Wishlist";
-  toggleButton.addEventListener("click", toggleWishlist, false);
+  const toggleButton = document.createElement('div');
+  toggleButton.id = 'toggleWishlistButton';
+  toggleButton.innerText = 'Hide Wishlist';
+  toggleButton.addEventListener('click', toggleWishlist, false);
 
   return toggleButton;
 }
 
 // courtesy https://robkendal.co.uk/blog/2020-04-17-saving-text-to-client-side-file-using-vanilla-js
 function downloadToFile(content, filename, contentType) {
-  const a = document.createElement("a");
+  const a = document.createElement('a');
   const file = new Blob([content], { type: contentType });
 
   a.href = URL.createObjectURL(file);
@@ -201,26 +218,26 @@ function downloadToFile(content, filename, contentType) {
 }
 
 function addEventListeners() {
-  const addToWishlistButton = document.getElementById("addToWishlistButton");
-  addToWishlistButton.addEventListener("click", copyToTextarea, false);
+  const addToWishlistButton = document.getElementById('addToWishlistButton');
+  addToWishlistButton.addEventListener('click', copyToTextarea, false);
 
   const copyToClipboardButton = document.getElementById(
-    "copyToClipboardButton"
+    'copyToClipboardButton'
   );
   copyToClipboardButton.addEventListener(
-    "click",
+    'click',
     copyWishlistToClipboard,
     false
   );
 
-  const wishlistTextarea = document.getElementById("wishlistTextarea");
-  wishlistTextarea.addEventListener("input", onTextareaInput, false);
+  const wishlistTextarea = document.getElementById('wishlistTextarea');
+  wishlistTextarea.addEventListener('input', onTextareaInput, false);
 
-  const saveToFilebutton = document.getElementById("saveToFileButton");
-  saveToFilebutton.addEventListener("click", () => {
-    const textArea = document.getElementById("wishlistTextarea");
+  const saveToFileButton = document.getElementById('saveToFileButton');
+  saveToFileButton.addEventListener('click', () => {
+    const textArea = document.getElementById('wishlistTextarea');
 
-    downloadToFile(textArea.value, "dim-wishlist.txt", "text/plain");
+    downloadToFile(textArea.value, 'dim-wishlist.txt', 'text/plain');
   });
 }
 
@@ -229,7 +246,7 @@ let keysPressed = {};
 function keydownShortcut(event) {
   // event.preventDefault();
   keysPressed[event.key.toLowerCase()] = true;
-  console.log("keydown", event.key, { keysPressed });
+  console.log('keydown', event.key, { keysPressed });
   if (isShortcutPressed()) {
     console.log(`Shortcut (${shortcutKeys}) pressed`);
     if (addingEnabled) {
@@ -244,13 +261,13 @@ function keydownShortcut(event) {
 }
 
 function keyupShortcut(event) {
-  delete keysPressed[event.key.toLowerCase()]
-  console.log("keyup", event.key, { keysPressed });
+  delete keysPressed[event.key.toLowerCase()];
+  console.log('keyup', event.key, { keysPressed });
 }
 
 function isShortcutPressed() {
-  if (Object.keys(keysPressed).sort().join("+") === shortcutKeys) {
-    console.log("Shortcut was pressed");
+  if (Object.keys(keysPressed).sort().join('+') === shortcutKeys) {
+    console.log('Shortcut was pressed');
     keysPressed = {};
     return true;
   }
@@ -258,24 +275,24 @@ function isShortcutPressed() {
 }
 
 function addWarning() {
-  const error = document.getElementById("wishlistErrors");
-  console.log("Adding warning class to errorSpan");
-  error.innerText = "Currently parsing new input in wishlist. Please wait...";
-  error.classList.add("warning");
+  const error = document.getElementById('wishlistErrors');
+  console.log('Adding warning class to errorSpan');
+  error.innerText = 'Currently parsing new input in wishlist. Please wait...';
+  error.classList.add('warning');
 }
 
 function removeWarning() {
-  const error = document.getElementById("wishlistErrors");
-  console.log("Removing warning class from errorSpan");
-  error.innerText = "";
-  error.classList.remove("warning");
+  const error = document.getElementById('wishlistErrors');
+  console.log('Removing warning class from errorSpan');
+  error.innerText = '';
+  error.classList.remove('warning');
 }
 
 function addElements() {
-  const main = document.getElementsByTagName("main")[0];
+  const main = document.getElementsByTagName('main')[0];
 
-  const wishlistDiv = document.createElement("div");
-  wishlistDiv.id = "wishlistDiv";
+  const wishlistDiv = document.createElement('div');
+  wishlistDiv.id = 'wishlistDiv';
   wishlistDiv.innerHTML = `
     <div class="buttons">
 			<div id="addToWishlistButton" class="wishlistButton">Add to Wishlist</div>
@@ -299,9 +316,9 @@ function addElements() {
   main.appendChild(wishlistDiv);
   addEventListeners();
 
-  storage.get(["wishlistData"], (result) => {
-    const wishlistTextarea = document.getElementById("wishlistTextarea");
-    console.log("Value is currently " + result.wishlistData);
+  storage.get(['wishlistData'], (result) => {
+    const wishlistTextarea = document.getElementById('wishlistTextarea');
+    console.log('Value is currently ' + result.wishlistData);
     if (result.wishlistData) {
       rolls = JSON.parse(result.wishlistData);
       wishlistTextarea.value = buildRollsForTextarea();
@@ -310,8 +327,8 @@ function addElements() {
 
   getShortcutKeys();
 
-  document.addEventListener("keydown", keydownShortcut);
-  document.addEventListener("keyup", keyupShortcut);
+  document.addEventListener('keydown', keydownShortcut);
+  document.addEventListener('keyup', keyupShortcut);
 
   // const span = contains("span", "Gunsmith")[0];
   const searchDiv = document.querySelector('.search');
@@ -324,9 +341,9 @@ let weaponMap = {};
 let plugMap = {};
 
 function getShortcutKeys() {
-  storage.get(["shortcutKeys"], (result) => {
+  storage.get(['shortcutKeys'], (result) => {
     if (result.shortcutKeys !== undefined) {
-      console.log("ShortcutKeys currently set to", result.shortcutKeys);
+      console.log('ShortcutKeys currently set to', result.shortcutKeys);
       shortcutKeys = result.shortcutKeys;
     } else {
       storage.set({ shortcutKeys: shortcutKeys });
@@ -336,13 +353,13 @@ function getShortcutKeys() {
 
 async function getManifest() {
   const response = await fetch(
-    "https://www.bungie.net/Platform/Destiny2/Manifest/",
-    { headers: { "x-api-key": "897a3b5426fb4564b05058cad181b602" } }
+    'https://www.bungie.net/Platform/Destiny2/Manifest/',
+    { headers: { 'x-api-key': '897a3b5426fb4564b05058cad181b602' } }
   );
   const responseJson = await response.json();
 
-  const jsonWorld = responseJson["Response"]["jsonWorldContentPaths"]["en"];
-  const fullManifest = await fetch("https://www.bungie.net" + jsonWorld);
+  const jsonWorld = responseJson['Response']['jsonWorldContentPaths']['en'];
+  const fullManifest = await fetch('https://www.bungie.net' + jsonWorld);
   const fullManifestJson = await fullManifest.json();
 
   for (const hash in fullManifestJson.DestinyInventoryItemDefinition) {
@@ -351,17 +368,23 @@ async function getManifest() {
         hash
       ].displayProperties.name;
 
-
-    if (fullManifestJson.DestinyInventoryItemDefinition[hash].displayProperties.hasIcon) {
-      const traitType = fullManifestJson.DestinyInventoryItemDefinition[hash].itemTypeDisplayName;
-      if(traitType.includes("Enhanced")) continue;
-      const iconPath = fullManifestJson.DestinyInventoryItemDefinition[hash].displayProperties.icon;
-      plugMap[iconPath] = fullManifestJson.DestinyInventoryItemDefinition[hash].hash;
+    if (
+      fullManifestJson.DestinyInventoryItemDefinition[hash].displayProperties
+        .hasIcon
+    ) {
+      const traitType =
+        fullManifestJson.DestinyInventoryItemDefinition[hash]
+          .itemTypeDisplayName;
+      if (traitType.includes('Enhanced')) continue;
+      const iconPath =
+        fullManifestJson.DestinyInventoryItemDefinition[hash].displayProperties
+          .icon;
+      plugMap[iconPath] =
+        fullManifestJson.DestinyInventoryItemDefinition[hash].hash;
     }
   }
 
   for (const hash in fullManifestJson.DestinyPlugItemDefinition) {
-
   }
 }
 
@@ -392,11 +415,11 @@ observer.observe(document.body, {
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   console.log(
     sender.tab
-      ? "from a content script:" + sender.tab.url
-      : "from the extension"
+      ? 'from a content script:' + sender.tab.url
+      : 'from the extension'
   );
-  if (request.shortcutUpdated === "The shortcut has been updated.")
-    sendResponse({ ack: "Acknowledged." });
+  if (request.shortcutUpdated === 'The shortcut has been updated.')
+    sendResponse({ ack: 'Acknowledged.' });
   getShortcutKeys();
   return true;
 });

@@ -12,20 +12,18 @@ Example of newly generated roll:
 dimwishlist:item=3184681056&perks=1047830412,3142289711,706527188,47981717
 ```
 
-
-
 ## Features
 
-* **Keyboard shortcut** - Use the `INSERT` key to automatically add the currently selected roll into the wishlist. (There will be a feature to set a custom keyboard shortcut in the future.)
-* **Persistence** - If you accidentally reload the page, all your previously saved rolls will be saved in local storage of the browser.
+- **Keyboard shortcut** - Use the `INSERT` key to automatically add the currently selected roll into the wishlist. (There will be a feature to set a custom keyboard shortcut in the future.)
+- **Persistence** - If you accidentally reload the page, all your previously saved rolls will be saved in local storage of the browser.
 
-* **Notes** - You also have the ability to type notes for each weapon you add. Whenever you are done typing, the extension will wait a few seconds before saving that new note.
+- **Notes** - You also have the ability to type notes for each weapon you add. Whenever you are done typing, the extension will wait a few seconds before saving that new note.
 
-*  **Different Types of Rolls** - Choose between PvP, PvE, and GM (Grandmaster nightfalls) for different types of rolls for each weapon.
+- **Different Types of Rolls** - Choose between PvP, PvE, and GM (Grandmaster nightfalls) for different types of rolls for each weapon.
 
 ## Upcoming Features
 
-* Ability to change the keyboard shortcut for adding a roll
-* Help modal or popup
-* Undo the previous roll
-* Highlight the previously inserted roll
+- Ability to change the keyboard shortcut for adding a roll
+- Help modal or popup
+- Undo the previous roll
+- Highlight the previously inserted roll

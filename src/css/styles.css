@@ -68,7 +68,7 @@
 }
 
 .buttons label {
-    color: rgb(255,255,255);
+  color: rgb(255, 255, 255);
 }
 
 .radios {
@@ -80,5 +80,5 @@
 
 .radios label {
   grid-column: 2;
-  font-size: .8em;
+  font-size: 0.8em;
 }

@@ -1,4 +1,6 @@
 *.zip
+.vscode/
+build/
 node_modules/
 index.js
 package-lock.json
