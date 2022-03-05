@@ -12,23 +12,19 @@ function copyToTextarea() {
     .filter((x) => x.style.backgroundImage !== '')
     .forEach((plug) => {
       const backgroundImage = plug.style.backgroundImage;
-      const iconPath = backgroundImage.substring(
-        27,
-        backgroundImage.length - 2
-      );
+      const iconPath = backgroundImage.substring(27, backgroundImage.length - 2);
       perkHashes.push(plugMap[iconPath]);
     });
 
   const errorSpan = document.getElementById('wishlistErrors');
   const typeOfRoll = getRollType();
   const textarea = document.getElementById('wishlistTextarea');
-  const weaponBgImg =
-    document.querySelector('.weapon-name .icon').style.backgroundImage;
+  const weaponBgImg = document.querySelector('.weapon-name .icon').style.backgroundImage;
   const imgSrc = weaponBgImg.substring(27, weaponBgImg.length - 2);
   const weaponHash = plugMap[imgSrc];
   const weaponName = weaponMap[weaponHash];
   const rollKey = `${weaponName} (${typeOfRoll})`;
-  const roll = wishliistTextBuilder(weaponHash, perkHashes);
+  const roll = wishlistTextBuilder(weaponHash, perkHashes);
 
   if (isRollInWishlist(roll, rollKey)) {
     errorSpan.classList.add('error');
@@ -56,7 +52,7 @@ function copyToTextarea() {
   }
 }
 
-function wishliistTextBuilder(weaponHash, perkHashes) {
+function wishlistTextBuilder(weaponHash, perkHashes) {
   const perkString = 'perks=' + perkHashes.join(',');
   const weaponString = 'dimwishlist:item=' + weaponHash;
   return `${weaponString}&${perkString}`;
@@ -93,9 +89,7 @@ function onTextareaInput(e) {
   const addButton = document.getElementById('addToWishlistButton');
   disableAddButton(addButton, copyToTextarea);
   timeout = setTimeout(() => {
-    console.log(
-      'User has stopped typing. Parsing the textarea and updating localStorage.'
-    );
+    console.log('User has stopped typing. Parsing the textarea and updating localStorage.');
 
     parseTextarea();
     buildRollsForTextarea();
@@ -143,9 +137,7 @@ function parseTextarea() {
     }
     if (weaponRolls && weaponRolls.length > 0) {
       weaponHash =
-        weaponRolls[0].indexOf('&') >= 0
-          ? weaponRolls[0].split('&')[0].substr(17)
-          : weaponRolls[0].substr(17);
+        weaponRolls[0].indexOf('&') >= 0 ? weaponRolls[0].split('&')[0].substr(17) : weaponRolls[0].substr(17);
       if (weaponHash.indexOf('-') === 0) {
         weaponHash = weaponHash.substr(1);
       }
@@ -221,14 +213,8 @@ function addEventListeners() {
   const addToWishlistButton = document.getElementById('addToWishlistButton');
   addToWishlistButton.addEventListener('click', copyToTextarea, false);
 
-  const copyToClipboardButton = document.getElementById(
-    'copyToClipboardButton'
-  );
-  copyToClipboardButton.addEventListener(
-    'click',
-    copyWishlistToClipboard,
-    false
-  );
+  const copyToClipboardButton = document.getElementById('copyToClipboardButton');
+  copyToClipboardButton.addEventListener('click', copyWishlistToClipboard, false);
 
   const wishlistTextarea = document.getElementById('wishlistTextarea');
   wishlistTextarea.addEventListener('input', onTextareaInput, false);
@@ -352,10 +338,9 @@ function getShortcutKeys() {
 }
 
 async function getManifest() {
-  const response = await fetch(
-    'https://www.bungie.net/Platform/Destiny2/Manifest/',
-    { headers: { 'x-api-key': '897a3b5426fb4564b05058cad181b602' } }
-  );
+  const response = await fetch('https://www.bungie.net/Platform/Destiny2/Manifest/', {
+    headers: { 'x-api-key': '897a3b5426fb4564b05058cad181b602' },
+  });
   const responseJson = await response.json();
 
   const jsonWorld = responseJson['Response']['jsonWorldContentPaths']['en'];
@@ -363,24 +348,18 @@ async function getManifest() {
   const fullManifestJson = await fullManifest.json();
 
   for (const hash in fullManifestJson.DestinyInventoryItemDefinition) {
-    weaponMap[hash] =
-      fullManifestJson.DestinyInventoryItemDefinition[
-        hash
-      ].displayProperties.name;
+    const item = fullManifestJson.DestinyInventoryItemDefinition[hash];
+    
+    // Only map weapons
+    if (item.itemType === 3) {
+      weaponMap[hash] = fullManifestJson.DestinyInventoryItemDefinition[hash].displayProperties.name;
+    }
 
-    if (
-      fullManifestJson.DestinyInventoryItemDefinition[hash].displayProperties
-        .hasIcon
-    ) {
-      const traitType =
-        fullManifestJson.DestinyInventoryItemDefinition[hash]
-          .itemTypeDisplayName;
+    if (fullManifestJson.DestinyInventoryItemDefinition[hash].displayProperties.hasIcon) {
+      const traitType = fullManifestJson.DestinyInventoryItemDefinition[hash].itemTypeDisplayName;
       if (traitType.includes('Enhanced')) continue;
-      const iconPath =
-        fullManifestJson.DestinyInventoryItemDefinition[hash].displayProperties
-          .icon;
-      plugMap[iconPath] =
-        fullManifestJson.DestinyInventoryItemDefinition[hash].hash;
+      const iconPath = fullManifestJson.DestinyInventoryItemDefinition[hash].displayProperties.icon;
+      plugMap[iconPath] = fullManifestJson.DestinyInventoryItemDefinition[hash].hash;
     }
   }
 
@@ -413,13 +392,8 @@ observer.observe(document.body, {
 });
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  console.log(
-    sender.tab
-      ? 'from a content script:' + sender.tab.url
-      : 'from the extension'
-  );
-  if (request.shortcutUpdated === 'The shortcut has been updated.')
-    sendResponse({ ack: 'Acknowledged.' });
+  console.log(sender.tab ? 'from a content script:' + sender.tab.url : 'from the extension');
+  if (request.shortcutUpdated === 'The shortcut has been updated.') sendResponse({ ack: 'Acknowledged.' });
   getShortcutKeys();
   return true;
 });
