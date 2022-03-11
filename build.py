@@ -1,12 +1,17 @@
-import os, zipfile, re, json, os.path
+import os
+import zipfile
+import re
+import json
+import os.path
 from typing import List
+
 
 def get_files_to_zip():
     zippable_files = []
     exclude = [
-        r'\.(py|md|zip)', # file extensions
-        r'\.gitignore|package\.json|package-lock\.json|tsconfig\.json', # files
-        r'(\\|/)(screenshots|test|node_modules|\.github|\.git)' # directories    
+        r'\.(py|md|zip)',  # file extensions
+        r'\.gitignore|package\.json|package-lock\.json|tsconfig\.json|\.prettier.*',  # files
+        r'(\\|/)(screenshots|test|node_modules|\.github|\.git|\.vscode)'  # directories
     ]
 
     for root, folders, files in os.walk('.'):
@@ -18,14 +23,20 @@ def get_files_to_zip():
     return zippable_files
 
 
-def zip_files(files: List[str], browser: str):
+def get_version():
+    manifest = json.load(open('manifest.json'))
+    return manifest['version']
+
+
+def zip_files(files: List[str], browser: str, version: str):
     output_folder = 'build'
     if not os.path.isdir(output_folder):
         os.mkdir(output_folder)
 
-    output_file = os.path.join(output_folder, f"dimwishlistbuilder-{browser}.zip")
+    output_file = os.path.join(
+        output_folder, f"dimwishlistbuilder-{version}-{browser}.zip")
     zf = zipfile.ZipFile(output_file, 'w', zipfile.ZIP_STORED)
-    
+
     for f in files:
         print("Creating for", browser)
         if f.endswith("manifest.json"):
@@ -33,7 +44,7 @@ def zip_files(files: List[str], browser: str):
             if browser == "firefox":
                 manifest["manifest_version"] = 2
                 manifest["permissions"].append("https://www.bungie.net/*")
-            
+
             zf.writestr(f[2:], json.dumps(manifest, indent=2))
         else:
             zf.write(f[2:])
@@ -43,8 +54,9 @@ def zip_files(files: List[str], browser: str):
 
 if __name__ == "__main__":
     browsers = ["chrome", "firefox"]
+    version = get_version()
     files_to_zip = get_files_to_zip()
     print("Files to zip:", files_to_zip)
-    
+
     for browser in browsers:
-        zip_files(files_to_zip, browser)
+        zip_files(files_to_zip, browser, version)

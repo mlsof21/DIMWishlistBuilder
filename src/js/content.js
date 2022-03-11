@@ -1,10 +1,24 @@
+const weaponPerkSocketHash = 4241085061;
+const weaponHashRegex = /.*screenshots\/(\d+)\.jpg/;
 let storage = chrome.storage.local;
 let rolls = {};
 let addingEnabled = true;
 let shortcutKeys = 'insert';
+let weaponNameByHash = {};
+let weaponHashByIcon = {};
+let perksByWeaponHash = {};
+let plugHashByIcon = {};
+let manifest;
 
 function copyToTextarea() {
   // const wishlistText = document.querySelector("div > form > textarea");
+  const weaponBgImg = document.querySelector('.vanity').style.backgroundImage;
+  // const imgSrc = weaponBgImg.substring(27, weaponBgImg.length - 2);
+  const matches = weaponHashRegex.exec(weaponBgImg);
+  // const weaponHash = weaponHashByIcon[imgSrc];
+  const weaponHash = matches[1];
+  const weaponName = weaponNameByHash[weaponHash];
+
   const plugs = document.querySelectorAll('.vanity .plug');
   const activePlugs = [...plugs].slice(1);
   const perkHashes = [];
@@ -13,49 +27,80 @@ function copyToTextarea() {
     .forEach((plug) => {
       const backgroundImage = plug.style.backgroundImage;
       const iconPath = backgroundImage.substring(27, backgroundImage.length - 2);
-      perkHashes.push(plugMap[iconPath]);
+      const potentialPerks = [];
+      for (const perk of plugHashByIcon[iconPath]) {
+        if (perksByWeaponHash[weaponHash].includes(parseInt(perk))) {
+          potentialPerks.push(perk);
+        }
+      }
+      perkHashes.push(potentialPerks);
     });
 
   const errorSpan = document.getElementById('wishlistErrors');
   const typeOfRoll = getRollType();
   const textarea = document.getElementById('wishlistTextarea');
-  const weaponBgImg = document.querySelector('.weapon-name .icon').style.backgroundImage;
-  const imgSrc = weaponBgImg.substring(27, weaponBgImg.length - 2);
-  const weaponHash = plugMap[imgSrc];
-  const weaponName = weaponMap[weaponHash];
   const rollKey = `${weaponName} (${typeOfRoll})`;
-  const roll = wishlistTextBuilder(weaponHash, perkHashes);
+  const builderRolls = wishlistTextBuilder(weaponHash, perkHashes);
 
-  if (isRollInWishlist(roll, rollKey)) {
-    errorSpan.classList.add('error');
-    errorSpan.innerText = 'This roll already exists in wishlist.';
-  } else {
-    if (!(rollKey in rolls)) {
-      rolls[rollKey] = {};
-      rolls[rollKey]['name'] = weaponName;
-      rolls[rollKey]['rolls'] = [];
-      rolls[rollKey]['notes'] = `${typeOfRoll}-`;
+  console.time('rolls');
+  for (const roll of builderRolls) {
+    if (isRollInWishlist(roll, rollKey)) {
+      errorSpan.classList.add('error');
+      errorSpan.innerText = 'This roll already exists in wishlist.';
+    } else {
+      if (!(rollKey in rolls)) {
+        rolls[rollKey] = {};
+        rolls[rollKey]['name'] = weaponName;
+        rolls[rollKey]['rolls'] = [];
+        rolls[rollKey]['notes'] = `${typeOfRoll}-`;
+      }
+      rolls[rollKey]['rolls'].push(roll);
     }
-    rolls[rollKey]['rolls'].push(roll);
-    let fullText = buildRollsForTextarea();
-    textarea.value = fullText;
-
-    const startHighlight = textarea.value.indexOf(roll);
-
-    textarea.focus();
-    textarea.setSelectionRange(startHighlight, startHighlight + roll.length);
-
-    setLocalStorage(fullText);
-
-    errorSpan.classList.remove('error');
-    errorSpan.innerText = '';
   }
+  let fullText = buildRollsForTextarea();
+  textarea.value = fullText;
+
+  const startHighlight = textarea.value.indexOf(builderRolls[0]);
+  const maxLength = builderRolls.reduce((prev, curr) => prev + curr.length + 1, 0);
+
+  textarea.focus();
+  textarea.setSelectionRange(startHighlight, startHighlight + maxLength);
+
+  setLocalStorage(fullText);
+
+  errorSpan.classList.remove('error');
+  errorSpan.innerText = '';
+  console.timeEnd('rolls');
 }
 
 function wishlistTextBuilder(weaponHash, perkHashes) {
-  const perkString = 'perks=' + perkHashes.join(',');
-  const weaponString = 'dimwishlist:item=' + weaponHash;
-  return `${weaponString}&${perkString}`;
+  const perkCombinations = getPerkCombinations(perkHashes);
+  const rolls = [];
+
+  for (const combo of perkCombinations) {
+    const weaponString = 'dimwishlist:item=' + weaponHash;
+    const perkString = `perks=${combo.join(',')}`;
+    rolls.push(`${weaponString}&${perkString}`);
+  }
+  return rolls;
+}
+
+function getPerkCombinations(perkHashes) {
+  const res = [];
+  let max = perkHashes.length - 1;
+  const helper = (arr, i) => {
+    for (let j = 0, l = perkHashes[i].length; j < l; j++) {
+      let copy = arr.slice(0);
+      copy.push(perkHashes[i][j]);
+      if (i == max) {
+        res.push(copy);
+      } else {
+        helper(copy, i + 1);
+      }
+    }
+  };
+  helper([], 0);
+  return res;
 }
 
 function getRollType() {
@@ -143,7 +188,7 @@ function parseTextarea() {
       }
     }
     rolls[weaponKey] = {};
-    rolls[weaponKey]['name'] = weaponMap[weaponHash];
+    rolls[weaponKey]['name'] = weaponNameByHash[weaponHash];
     rolls[weaponKey]['notes'] = notes;
     rolls[weaponKey]['rolls'] = weaponRolls;
   }
@@ -252,7 +297,7 @@ function keyupShortcut(event) {
 }
 
 function isShortcutPressed() {
-  if (Object.keys(keysPressed).sort().join('+') === shortcutKeys) {
+  if (Object.keys(keysPressed).sort().join('+').includes(shortcutKeys)) {
     console.log('Shortcut was pressed');
     keysPressed = {};
     return true;
@@ -323,9 +368,6 @@ function addElements() {
   observer.disconnect();
 }
 
-let weaponMap = {};
-let plugMap = {};
-
 function getShortcutKeys() {
   storage.get(['shortcutKeys'], (result) => {
     if (result.shortcutKeys !== undefined) {
@@ -345,25 +387,60 @@ async function getManifest() {
 
   const jsonWorld = responseJson['Response']['jsonWorldContentPaths']['en'];
   const fullManifest = await fetch('https://www.bungie.net' + jsonWorld);
-  const fullManifestJson = await fullManifest.json();
+  manifest = await fullManifest.json();
 
-  for (const hash in fullManifestJson.DestinyInventoryItemDefinition) {
-    const item = fullManifestJson.DestinyInventoryItemDefinition[hash];
-    
+  createMaps();
+}
+
+function createMaps() {
+  for (const hash in manifest.DestinyInventoryItemDefinition) {
+    const item = manifest.DestinyInventoryItemDefinition[hash];
+
     // Only map weapons
     if (item.itemType === 3) {
-      weaponMap[hash] = fullManifestJson.DestinyInventoryItemDefinition[hash].displayProperties.name;
+      weaponNameByHash[hash] = manifest.DestinyInventoryItemDefinition[hash].displayProperties.name;
+      const iconPath = manifest.DestinyInventoryItemDefinition[hash].displayProperties.icon;
+      // if (!(iconPath in weaponHashByIcon)) weaponHashByIcon[iconPath] = [];
+      // weaponHashByIcon[iconPath].push(hash);
+      weaponHashByIcon[iconPath] = hash;
+      mapPerks(hash);
     }
 
-    if (fullManifestJson.DestinyInventoryItemDefinition[hash].displayProperties.hasIcon) {
-      const traitType = fullManifestJson.DestinyInventoryItemDefinition[hash].itemTypeDisplayName;
-      if (traitType.includes('Enhanced')) continue;
-      const iconPath = fullManifestJson.DestinyInventoryItemDefinition[hash].displayProperties.icon;
-      plugMap[iconPath] = fullManifestJson.DestinyInventoryItemDefinition[hash].hash;
+    if (manifest.DestinyInventoryItemDefinition[hash].displayProperties.hasIcon) {
+      // const itemTypeDisplayName = manifest.DestinyInventoryItemDefinition[hash].itemTypeDisplayName;
+      // if (!itemTypeDisplayName.includes('Trait')) continue;
+      // if (itemTypeDisplayName.includes('Enhanced')) continue;
+      const iconPath = manifest.DestinyInventoryItemDefinition[hash].displayProperties.icon;
+      if (!(iconPath in plugHashByIcon)) plugHashByIcon[iconPath] = [];
+      plugHashByIcon[iconPath].push(hash);
     }
   }
+}
 
-  for (const hash in fullManifestJson.DestinyPlugItemDefinition) {
+function mapPerks(weaponHash) {
+  console.log('Getting perks for weapon hash', weaponHash);
+  const manifestItem = manifest.DestinyInventoryItemDefinition[weaponHash];
+  const perkSocketIndexes = manifestItem.sockets.socketCategories.filter(
+    (x) => x.socketCategoryHash === weaponPerkSocketHash
+  );
+
+  if (perkSocketIndexes.length === 0) return;
+
+  for (const socketIndex of perkSocketIndexes[0].socketIndexes) {
+    let plugSetHash;
+    if ('randomizedPlugSetHash' in manifestItem.sockets.socketEntries[socketIndex]) {
+      plugSetHash = manifestItem.sockets.socketEntries[socketIndex].randomizedPlugSetHash;
+    } else {
+      plugSetHash = manifestItem.sockets.socketEntries[socketIndex].reusablePlugSetHash;
+    }
+
+    if (!plugSetHash) return;
+
+    const perkHashes = manifest.DestinyPlugSetDefinition[plugSetHash].reusablePlugItems.map((x) => x.plugItemHash);
+    if (!(weaponHash in perksByWeaponHash)) {
+      perksByWeaponHash[weaponHash] = [];
+    }
+    perksByWeaponHash[weaponHash].push(...perkHashes);
   }
 }
 

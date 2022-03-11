@@ -1,3 +1,10 @@
+**1.1.5 - March 11, 2022**
+- Fix more mapping errors.
+- Add multiple rolls whenever a perk has an enhanced version. This will remain until D2Gunsmith can explicitly select between the two.
+
+**1.1.4 - March 9, 2022**
+- Fix various weapon mapping errors by only getting weapons from manifest. Was previously mapping dummy items incorrectly.
+
 **1.1.3 - February 26, 2022**
 
 - Fixed import errors by trimming input when parsing the textarea
