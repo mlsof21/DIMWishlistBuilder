@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "test": "jest",
-    "zip": "python build.py"
+    "zip": "python build.py",
+    "prettier-format": "prettier --config .prettierrc 'src/**/*.js' --write",
+    "lint": "eslint . --ext .js"
   },
   "repository": {
     "type": "git",

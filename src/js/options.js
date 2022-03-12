@@ -21,9 +21,7 @@ function keydownUpdateShortcut(e) {
 function keyupUpdateShortcut(e) {
   window.removeEventListener('keydown', keydownUpdateShortcut);
   console.log('shortcut set to', { shortcutKeys });
-  document.getElementById('shortcut').innerText = Object.keys(shortcutKeys)
-    .sort()
-    .join('+');
+  document.getElementById('shortcut').innerText = Object.keys(shortcutKeys).sort().join('+');
 
   storage.set({ shortcutKeys: Object.keys(shortcutKeys).join('+') });
   window.removeEventListener('keyup', keyupUpdateShortcut);
@@ -31,13 +29,9 @@ function keyupUpdateShortcut(e) {
   shortcutButton.innerText = 'Update Shortcut';
 
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-    chrome.tabs.sendMessage(
-      tabs[0].id,
-      { shortcutUpdated: 'The shortcut has been updated.' },
-      function (response) {
-        console.log(response.ack);
-      }
-    );
+    chrome.tabs.sendMessage(tabs[0].id, { shortcutUpdated: 'The shortcut has been updated.' }, function (response) {
+      console.log(response.ack);
+    });
   });
 }
 

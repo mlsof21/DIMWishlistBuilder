@@ -181,7 +181,8 @@ function parseTextarea() {
       }
     }
     if (weaponRolls && weaponRolls.length > 0) {
-      weaponHash = weaponRolls[0].indexOf('&') >= 0 ? weaponRolls[0].split('&')[0].substr(17) : weaponRolls[0].substr(17);
+      weaponHash =
+        weaponRolls[0].indexOf('&') >= 0 ? weaponRolls[0].split('&')[0].substr(17) : weaponRolls[0].substr(17);
       if (weaponHash.indexOf('-') === 0) {
         weaponHash = weaponHash.substr(1);
       }
@@ -418,7 +419,7 @@ function mapPerks(weaponHash) {
   console.log('Getting perks for weapon hash', weaponHash);
   const manifestItem = manifest.DestinyInventoryItemDefinition[weaponHash];
   const perkSocketIndexes = manifestItem.sockets.socketCategories.filter(
-    (x) => x.socketCategoryHash === weaponPerkSocketHash,
+    (x) => x.socketCategoryHash === weaponPerkSocketHash
   );
 
   if (perkSocketIndexes.length === 0) return;
