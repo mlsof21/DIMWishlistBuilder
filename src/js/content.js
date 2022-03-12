@@ -1,13 +1,13 @@
 const weaponPerkSocketHash = 4241085061;
 const weaponHashRegex = /.*screenshots\/(\d+)\.jpg/;
-let storage = chrome.storage.local;
+const storage = chrome.storage.local;
 let rolls = {};
 let addingEnabled = true;
 let shortcutKeys = 'insert';
-let weaponNameByHash = {};
-let weaponHashByIcon = {};
-let perksByWeaponHash = {};
-let plugHashByIcon = {};
+const weaponNameByHash = {};
+const weaponHashByIcon = {};
+const perksByWeaponHash = {};
+const plugHashByIcon = {};
 let manifest;
 
 function copyToTextarea() {
@@ -25,7 +25,7 @@ function copyToTextarea() {
   activePlugs
     .filter((x) => x.style.backgroundImage !== '')
     .forEach((plug) => {
-      const backgroundImage = plug.style.backgroundImage;
+      const { backgroundImage } = plug.style;
       const iconPath = backgroundImage.substring(27, backgroundImage.length - 2);
       const potentialPerks = [];
       for (const perk of plugHashByIcon[iconPath]) {
@@ -50,14 +50,14 @@ function copyToTextarea() {
     } else {
       if (!(rollKey in rolls)) {
         rolls[rollKey] = {};
-        rolls[rollKey]['name'] = weaponName;
-        rolls[rollKey]['rolls'] = [];
-        rolls[rollKey]['notes'] = `${typeOfRoll}-`;
+        rolls[rollKey].name = weaponName;
+        rolls[rollKey].rolls = [];
+        rolls[rollKey].notes = `${typeOfRoll}-`;
       }
-      rolls[rollKey]['rolls'].push(roll);
+      rolls[rollKey].rolls.push(roll);
     }
   }
-  let fullText = buildRollsForTextarea();
+  const fullText = buildRollsForTextarea();
   textarea.value = fullText;
 
   const startHighlight = textarea.value.indexOf(builderRolls[0]);
@@ -78,7 +78,7 @@ function wishlistTextBuilder(weaponHash, perkHashes) {
   const rolls = [];
 
   for (const combo of perkCombinations) {
-    const weaponString = 'dimwishlist:item=' + weaponHash;
+    const weaponString = `dimwishlist:item=${weaponHash}`;
     const perkString = `perks=${combo.join(',')}`;
     rolls.push(`${weaponString}&${perkString}`);
   }
@@ -87,10 +87,10 @@ function wishlistTextBuilder(weaponHash, perkHashes) {
 
 function getPerkCombinations(perkHashes) {
   const res = [];
-  let max = perkHashes.length - 1;
+  const max = perkHashes.length - 1;
   const helper = (arr, i) => {
     for (let j = 0, l = perkHashes[i].length; j < l; j++) {
-      let copy = arr.slice(0);
+      const copy = arr.slice(0);
       copy.push(perkHashes[i][j]);
       if (i == max) {
         res.push(copy);
@@ -110,10 +110,10 @@ function getRollType() {
 
 function buildRollsForTextarea() {
   let fullText = '';
-  for (var weaponKey in rolls) {
+  for (const weaponKey in rolls) {
     fullText += `// ${weaponKey}\n`;
-    fullText += `//notes:${rolls[weaponKey]['notes']}\n`;
-    for (const roll of rolls[weaponKey]['rolls']) {
+    fullText += `//notes:${rolls[weaponKey].notes}\n`;
+    for (const roll of rolls[weaponKey].rolls) {
       fullText += `${roll}\n`;
     }
     fullText += '\n';
@@ -181,16 +181,15 @@ function parseTextarea() {
       }
     }
     if (weaponRolls && weaponRolls.length > 0) {
-      weaponHash =
-        weaponRolls[0].indexOf('&') >= 0 ? weaponRolls[0].split('&')[0].substr(17) : weaponRolls[0].substr(17);
+      weaponHash = weaponRolls[0].indexOf('&') >= 0 ? weaponRolls[0].split('&')[0].substr(17) : weaponRolls[0].substr(17);
       if (weaponHash.indexOf('-') === 0) {
         weaponHash = weaponHash.substr(1);
       }
     }
     rolls[weaponKey] = {};
-    rolls[weaponKey]['name'] = weaponNameByHash[weaponHash];
-    rolls[weaponKey]['notes'] = notes;
-    rolls[weaponKey]['rolls'] = weaponRolls;
+    rolls[weaponKey].name = weaponNameByHash[weaponHash];
+    rolls[weaponKey].notes = notes;
+    rolls[weaponKey].rolls = weaponRolls;
   }
 }
 
@@ -204,7 +203,7 @@ async function copyWishlistToClipboard() {
 
 function isRollInWishlist(newRoll, weapon) {
   if (weapon in rolls) {
-    for (const roll of rolls[weapon]['rolls']) {
+    for (const roll of rolls[weapon].rolls) {
       if (newRoll === roll) {
         return true;
       }
@@ -227,10 +226,8 @@ function toggleWishlist(e) {
 }
 
 function contains(selector, text) {
-  var elements = document.querySelectorAll(selector);
-  return [].filter.call(elements, function (element) {
-    return RegExp(text).test(element.textContent);
-  });
+  const elements = document.querySelectorAll(selector);
+  return [].filter.call(elements, (element) => RegExp(text).test(element.textContent));
 }
 
 function getToggleButton() {
@@ -349,7 +346,7 @@ function addElements() {
 
   storage.get(['wishlistData'], (result) => {
     const wishlistTextarea = document.getElementById('wishlistTextarea');
-    console.log('Value is currently ' + result.wishlistData);
+    console.log(`Value is currently ${result.wishlistData}`);
     if (result.wishlistData) {
       rolls = JSON.parse(result.wishlistData);
       wishlistTextarea.value = buildRollsForTextarea();
@@ -374,7 +371,7 @@ function getShortcutKeys() {
       console.log('ShortcutKeys currently set to', result.shortcutKeys);
       shortcutKeys = result.shortcutKeys;
     } else {
-      storage.set({ shortcutKeys: shortcutKeys });
+      storage.set({ shortcutKeys });
     }
   });
 }
@@ -385,8 +382,8 @@ async function getManifest() {
   });
   const responseJson = await response.json();
 
-  const jsonWorld = responseJson['Response']['jsonWorldContentPaths']['en'];
-  const fullManifest = await fetch('https://www.bungie.net' + jsonWorld);
+  const jsonWorld = responseJson.Response.jsonWorldContentPaths.en;
+  const fullManifest = await fetch(`https://www.bungie.net${jsonWorld}`);
   manifest = await fullManifest.json();
 
   createMaps();
@@ -421,7 +418,7 @@ function mapPerks(weaponHash) {
   console.log('Getting perks for weapon hash', weaponHash);
   const manifestItem = manifest.DestinyInventoryItemDefinition[weaponHash];
   const perkSocketIndexes = manifestItem.sockets.socketCategories.filter(
-    (x) => x.socketCategoryHash === weaponPerkSocketHash
+    (x) => x.socketCategoryHash === weaponPerkSocketHash,
   );
 
   if (perkSocketIndexes.length === 0) return;
@@ -451,8 +448,8 @@ let observer = new MutationObserver((mutations) => {
     if (!mutation.addedNodes) return;
 
     for (let i = 0; i < mutation.addedNodes.length; i++) {
-      let node = mutation.addedNodes[i];
-      let classList = node.classList;
+      const node = mutation.addedNodes[i];
+      const { classList } = node;
       if (classList.contains('perks')) {
         addElements();
         break;
@@ -468,8 +465,8 @@ observer.observe(document.body, {
   characterData: false,
 });
 
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  console.log(sender.tab ? 'from a content script:' + sender.tab.url : 'from the extension');
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log(sender.tab ? `from a content script:${sender.tab.url}` : 'from the extension');
   if (request.shortcutUpdated === 'The shortcut has been updated.') sendResponse({ ack: 'Acknowledged.' });
   getShortcutKeys();
   return true;
