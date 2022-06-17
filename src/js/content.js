@@ -1,106 +1,59 @@
-const weaponPerkSocketHash = 4241085061;
-const weaponHashRegex = /.*screenshots\/(\d+)\.jpg/;
 let storage = chrome.storage.local;
 let rolls = {};
 let addingEnabled = true;
 let shortcutKeys = 'insert';
 let weaponNameByHash = {};
-let weaponHashByIcon = {};
-let perksByWeaponHash = {};
-let plugHashByIcon = {};
 let manifest;
 
-function copyToTextarea() {
-  // const wishlistText = document.querySelector("div > form > textarea");
-  const weaponBgImg = document.querySelector('.vanity').style.backgroundImage;
-  // const imgSrc = weaponBgImg.substring(27, weaponBgImg.length - 2);
-  const matches = weaponHashRegex.exec(weaponBgImg);
-  // const weaponHash = weaponHashByIcon[imgSrc];
-  const weaponHash = matches[1];
-  const weaponName = weaponNameByHash[weaponHash];
+const singleClick = new Event('click', {
+  bubbles: true,
+  cancelable: true,
+});
 
-  const plugs = document.querySelectorAll('.vanity .plug');
-  const activePlugs = [...plugs].slice(1);
-  const perkHashes = [];
-  activePlugs
-    .filter((x) => x.style.backgroundImage !== '')
-    .forEach((plug) => {
-      const backgroundImage = plug.style.backgroundImage;
-      const iconPath = backgroundImage.substring(27, backgroundImage.length - 2);
-      const potentialPerks = [];
-      for (const perk of plugHashByIcon[iconPath]) {
-        if (perksByWeaponHash[weaponHash].includes(parseInt(perk))) {
-          potentialPerks.push(perk);
-        }
-      }
-      perkHashes.push(potentialPerks);
-    });
+async function getWishlistText() {
+  const wishlistButton = [...document.querySelectorAll('button')].filter((a) =>
+    a.textContent.includes('Copy Wishlist Item')
+  )[0];
+  wishlistButton.dispatchEvent(singleClick);
+
+  return await navigator.clipboard.readText();
+}
+
+async function copyToTextarea() {
+  const roll = await getWishlistText();
+  const weaponHash = roll.split('&')[0].substring(17);
+  const weaponName = weaponNameByHash[weaponHash];
 
   const errorSpan = document.getElementById('wishlistErrors');
   const typeOfRoll = getRollType();
   const textarea = document.getElementById('wishlistTextarea');
   const rollKey = `${weaponName} (${typeOfRoll})`;
-  const builderRolls = wishlistTextBuilder(weaponHash, perkHashes);
+  console.log(`Wishlist roll: ${roll}`);
 
-  console.time('rolls');
-  for (const roll of builderRolls) {
-    if (isRollInWishlist(roll, rollKey)) {
-      errorSpan.classList.add('error');
-      errorSpan.innerText = 'This roll already exists in wishlist.';
-    } else {
-      if (!(rollKey in rolls)) {
-        rolls[rollKey] = {};
-        rolls[rollKey]['name'] = weaponName;
-        rolls[rollKey]['rolls'] = [];
-        rolls[rollKey]['notes'] = `${typeOfRoll}-`;
-      }
-      rolls[rollKey]['rolls'].push(roll);
+  if (isRollInWishlist(roll, rollKey)) {
+    errorSpan.classList.add('error');
+    errorSpan.innerText = 'This roll already exists in wishlist.';
+  } else {
+    if (!(rollKey in rolls)) {
+      rolls[rollKey] = {};
+      rolls[rollKey]['name'] = weaponName;
+      rolls[rollKey]['rolls'] = [];
+      rolls[rollKey]['notes'] = `${typeOfRoll}-`;
     }
+    rolls[rollKey]['rolls'].push(roll);
   }
   let fullText = buildRollsForTextarea();
   textarea.value = fullText;
 
-  const startHighlight = textarea.value.indexOf(builderRolls[0]);
-  const maxLength = builderRolls.reduce((prev, curr) => prev + curr.length + 1, 0);
+  const startHighlightIndex = textarea.value.indexOf(roll);
 
   textarea.focus();
-  textarea.setSelectionRange(startHighlight, startHighlight + maxLength);
+  textarea.setSelectionRange(startHighlightIndex, startHighlightIndex + startHighlightIndex.length);
 
   setLocalStorage(fullText);
 
   errorSpan.classList.remove('error');
   errorSpan.innerText = '';
-  console.timeEnd('rolls');
-}
-
-function wishlistTextBuilder(weaponHash, perkHashes) {
-  const perkCombinations = getPerkCombinations(perkHashes);
-  const rolls = [];
-
-  for (const combo of perkCombinations) {
-    const weaponString = 'dimwishlist:item=' + weaponHash;
-    const perkString = `perks=${combo.join(',')}`;
-    rolls.push(`${weaponString}&${perkString}`);
-  }
-  return rolls;
-}
-
-function getPerkCombinations(perkHashes) {
-  const res = [];
-  let max = perkHashes.length - 1;
-  const helper = (arr, i) => {
-    for (let j = 0, l = perkHashes[i].length; j < l; j++) {
-      let copy = arr.slice(0);
-      copy.push(perkHashes[i][j]);
-      if (i == max) {
-        res.push(copy);
-      } else {
-        helper(copy, i + 1);
-      }
-    }
-  };
-  helper([], 0);
-  return res;
 }
 
 function getRollType() {
@@ -137,8 +90,9 @@ function onTextareaInput(e) {
     console.log('User has stopped typing. Parsing the textarea and updating localStorage.');
 
     parseTextarea();
-    buildRollsForTextarea();
-    setLocalStorage();
+    let fullText = buildRollsForTextarea();
+    e.target.value = fullText;
+    setLocalStorage(fullText);
     enableAddButton(addButton, copyToTextarea);
   }, 2000);
 }
@@ -164,31 +118,51 @@ function parseTextarea() {
   for (const weapon of weapons) {
     const items = weapon.trim().split('\n');
     let weaponKey = '';
+    let weaponName = '';
     let weaponHash = '';
+    let actualWeaponName = '';
     let notes = '';
+    let typeOfRoll = 'PvE';
     const weaponRolls = [];
     for (let item of items) {
       item = item.trim();
 
       if (item.startsWith('// ')) {
-        weaponKey = item.substr(3);
+        weaponName = item.substr(3);
+        continue;
       }
       if (item.startsWith('dimwishlist')) {
         weaponRolls.push(item);
+        continue;
       }
       if (item.startsWith('//notes:')) {
         notes = item.substr(8).trim();
+        continue;
       }
     }
     if (weaponRolls && weaponRolls.length > 0) {
       weaponHash =
-        weaponRolls[0].indexOf('&') >= 0 ? weaponRolls[0].split('&')[0].substr(17) : weaponRolls[0].substr(17);
+        weaponRolls[0].indexOf('&') >= 0 ? weaponRolls[0].split('&')[0].substring(17) : weaponRolls[0].substring(17);
       if (weaponHash.indexOf('-') === 0) {
-        weaponHash = weaponHash.substr(1);
+        weaponHash = weaponHash.substring(1);
       }
     }
+
+    actualWeaponName = weaponNameByHash[weaponHash];
+    const restOfNameLine = weaponName.replace(actualWeaponName, '').trim();
+    if (restOfNameLine.toLowerCase().includes('pve')) {
+      typeOfRoll = 'PvE';
+    }
+    if (restOfNameLine.toLowerCase().includes('pvp')) {
+      typeOfRoll = 'PvP';
+    }
+    if (restOfNameLine.toLowerCase().includes('gm')) {
+      typeOfRoll = 'GM';
+    }
+
+    weaponKey = `${actualWeaponName} (${typeOfRoll})`;
     rolls[weaponKey] = {};
-    rolls[weaponKey]['name'] = weaponNameByHash[weaponHash];
+    rolls[weaponKey]['name'] = actualWeaponName;
     rolls[weaponKey]['notes'] = notes;
     rolls[weaponKey]['rolls'] = weaponRolls;
   }
@@ -270,6 +244,24 @@ function addEventListeners() {
 
     downloadToFile(textArea.value, 'dim-wishlist.txt', 'text/plain');
   });
+
+  const modalButton = document.getElementById('wishlistModalButton');
+  modalButton.addEventListener('click', openModal, false);
+
+  const span = document.getElementsByClassName('close')[0];
+  span.addEventListener('click', closeModal, false);
+}
+
+function openModal() {
+  const modal = document.getElementById('wishlistModal');
+  console.log('opening modal');
+  modal.style.display = 'block';
+}
+
+function closeModal() {
+  const modal = document.getElementById('wishlistModal');
+  console.log('closing modal');
+  modal.style.display = 'none';
 }
 
 let keysPressed = {};
@@ -277,7 +269,6 @@ let keysPressed = {};
 function keydownShortcut(event) {
   // event.preventDefault();
   keysPressed[event.key.toLowerCase()] = true;
-  console.log('keydown', event.key, { keysPressed });
   if (isShortcutPressed()) {
     console.log(`Shortcut (${shortcutKeys}) pressed`);
     if (addingEnabled) {
@@ -293,7 +284,6 @@ function keydownShortcut(event) {
 
 function keyupShortcut(event) {
   delete keysPressed[event.key.toLowerCase()];
-  console.log('keyup', event.key, { keysPressed });
 }
 
 function isShortcutPressed() {
@@ -314,7 +304,6 @@ function addWarning() {
 
 function removeWarning() {
   const error = document.getElementById('wishlistErrors');
-  console.log('Removing warning class from errorSpan');
   error.innerText = '';
   error.classList.remove('warning');
 }
@@ -326,25 +315,46 @@ function addElements() {
   wishlistDiv.id = 'wishlistDiv';
   wishlistDiv.innerHTML = `
     <div class="buttons">
-			<div id="addToWishlistButton" class="wishlistButton">Add to Wishlist</div>
-    	<div id="copyToClipboardButton" class="wishlistButton">Copy to Clipboard</div>
-			<div id="saveToFileButton" class="wishlistButton">Save to File</div>
-			<div class="radios" id="typeRadios">
-				<input type="radio" name="rollType" id="PvE" value="PvE" checked>
-				<label for="PvE">PvE</label>
-				<input type="radio" name="rollType" id="PvP" value="PvP">
-				<label for="PvP">PvP</label>
-				<input type="radio" name="rollType" id="GM" value="GM">
-				<label for="GM">GM</label>
-			</div>
-		</div>
-    <textarea cols="50" rows="50" id="wishlistTextarea" spellcheck="false"></textarea>
-    <span id="wishlistErrors"></span>   
+      <div id="addToWishlistButton" class="wishlistButton">Add to Wishlist</div>
+      <div id="copyToClipboardButton" class="wishlistButton">Copy to Clipboard</div>
+      <div id="saveToFileButton" class="wishlistButton">Save to File</div>
+      <div class="radios" id="typeRadios">
+        <input type="radio" name="rollType" id="PvE" value="PvE" checked />
+        <label for="PvE">PvE</label>
+        <input type="radio" name="rollType" id="PvP" value="PvP" />
+        <label for="PvP">PvP</label>
+        <input type="radio" name="rollType" id="GM" value="GM" />
+        <label for="GM">GM</label>
+      </div>
+      <div id="wishlistModalButton" class="modalButton">?</div>
+    </div>
+    <textarea
+      cols="50"
+      rows="50"
+      id="wishlistTextarea"
+      spellcheck="false"
+    ></textarea>
+    <span id="wishlistErrors"></span>
   `;
+
+  const modal = document.createElement('div');
+  modal.id = 'wishlistModal';
+  modal.className = 'modal';
+  modal.innerHTML = `
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>DIM Wishlist Builder Help</h2>
+      <p>When adding a new roll, in the case that a selected perk has an Enhanced version, the builder will add a row for each permutation of the perks.</p>
+      <ul>
+        <li>Use INSERT as a keyboard shortcut to insert a new roll</li>
+        <li>Only add notes where indicated by the weapon section (<code>//notes:</code>)</li>
+      </ul>
+    </div>`;
 
   const toggleButton = getToggleButton();
 
   main.appendChild(wishlistDiv);
+  main.appendChild(modal);
   addEventListeners();
 
   storage.get(['wishlistData'], (result) => {
@@ -360,8 +370,17 @@ function addElements() {
 
   document.addEventListener('keydown', keydownShortcut);
   document.addEventListener('keyup', keyupShortcut);
+  document.addEventListener(
+    'click',
+    function (event) {
+      const modal = document.getElementById('wishlistModal');
+      if (event.target === modal) {
+        closeModal();
+      }
+    },
+    false
+  );
 
-  // const span = contains("span", "Gunsmith")[0];
   const searchDiv = document.querySelector('.search');
   searchDiv.parentElement.insertBefore(toggleButton, searchDiv);
 
@@ -399,48 +418,7 @@ function createMaps() {
     // Only map weapons
     if (item.itemType === 3) {
       weaponNameByHash[hash] = manifest.DestinyInventoryItemDefinition[hash].displayProperties.name;
-      const iconPath = manifest.DestinyInventoryItemDefinition[hash].displayProperties.icon;
-      // if (!(iconPath in weaponHashByIcon)) weaponHashByIcon[iconPath] = [];
-      // weaponHashByIcon[iconPath].push(hash);
-      weaponHashByIcon[iconPath] = hash;
-      mapPerks(hash);
     }
-
-    if (manifest.DestinyInventoryItemDefinition[hash].displayProperties.hasIcon) {
-      // const itemTypeDisplayName = manifest.DestinyInventoryItemDefinition[hash].itemTypeDisplayName;
-      // if (!itemTypeDisplayName.includes('Trait')) continue;
-      // if (itemTypeDisplayName.includes('Enhanced')) continue;
-      const iconPath = manifest.DestinyInventoryItemDefinition[hash].displayProperties.icon;
-      if (!(iconPath in plugHashByIcon)) plugHashByIcon[iconPath] = [];
-      plugHashByIcon[iconPath].push(hash);
-    }
-  }
-}
-
-function mapPerks(weaponHash) {
-  console.log('Getting perks for weapon hash', weaponHash);
-  const manifestItem = manifest.DestinyInventoryItemDefinition[weaponHash];
-  const perkSocketIndexes = manifestItem.sockets.socketCategories.filter(
-    (x) => x.socketCategoryHash === weaponPerkSocketHash
-  );
-
-  if (perkSocketIndexes.length === 0) return;
-
-  for (const socketIndex of perkSocketIndexes[0].socketIndexes) {
-    let plugSetHash;
-    if ('randomizedPlugSetHash' in manifestItem.sockets.socketEntries[socketIndex]) {
-      plugSetHash = manifestItem.sockets.socketEntries[socketIndex].randomizedPlugSetHash;
-    } else {
-      plugSetHash = manifestItem.sockets.socketEntries[socketIndex].reusablePlugSetHash;
-    }
-
-    if (!plugSetHash) return;
-
-    const perkHashes = manifest.DestinyPlugSetDefinition[plugSetHash].reusablePlugItems.map((x) => x.plugItemHash);
-    if (!(weaponHash in perksByWeaponHash)) {
-      perksByWeaponHash[weaponHash] = [];
-    }
-    perksByWeaponHash[weaponHash].push(...perkHashes);
   }
 }
 
