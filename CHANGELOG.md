@@ -1,3 +1,7 @@
+**1.2.0 - June 17, 2022**
+- Rollback to use the `Copy to Wishlist` button on D2Gunsmith
+- Updated importing method when bringing in an existing list
+
 **1.1.5 - March 11, 2022**
 - Fix more mapping errors.
 - Add multiple rolls whenever a perk has an enhanced version. This will remain until D2Gunsmith can explicitly select between the two.

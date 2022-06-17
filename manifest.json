@@ -1,7 +1,7 @@
 {
   "name": "DIM Wishlist Builder",
   "description": "Build a large DIM Wishlist.",
-  "version": "1.1.5",
+  "version": "1.2.0",
   "manifest_version": 3,
   "content_scripts": [
     {
