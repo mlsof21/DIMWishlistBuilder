@@ -10,17 +10,8 @@ const singleClick = new Event('click', {
   cancelable: true,
 });
 
-async function getWishlistText() {
-  const wishlistButton = [...document.querySelectorAll('button')].filter((a) =>
-    a.textContent.includes('Copy Wishlist Item')
-  )[0];
-  wishlistButton.dispatchEvent(singleClick);
-
-  return await navigator.clipboard.readText();
-}
-
 async function copyToTextarea() {
-  const roll = await getWishlistText();
+  const roll = await getWishlistTextFromUrl();
   const weaponHash = roll.split('&')[0].substring(17);
   const weaponName = weaponNameByHash[weaponHash];
 
@@ -54,6 +45,27 @@ async function copyToTextarea() {
 
   errorSpan.classList.remove('error');
   errorSpan.innerText = '';
+}
+
+async function getWishlistTextFromUrl() {
+  const pathName = window.location.pathname;
+  const search = window.location.search;
+  const weaponHash = pathName.match(/.+?(\d+)$/)[1];
+  const perks = search
+    .replace('?s=', '')
+    .split(',')
+    .slice(0, -1)
+    .filter((x) => x !== '0');
+  return `dimwishlist:item=${weaponHash}&perks=${perks.join(',')}`;
+}
+
+async function getWishlistText() {
+  const wishlistButton = [...document.querySelectorAll('button')].filter((a) =>
+    a.textContent.includes('Copy Wishlist Item')
+  )[0];
+  wishlistButton.dispatchEvent(singleClick);
+
+  return await navigator.clipboard.readText();
 }
 
 function getRollType() {

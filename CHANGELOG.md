@@ -1,3 +1,7 @@
+**1.2.1 - June 19, 2022**
+- Use the url to determine weapon hash and perks and build the text
+  - This allows more rapid insertions into the wishlist. Previously used the actual `Copy to Wishlist` button, which had a 2sec timeout when used.
+
 **1.2.0 - June 17, 2022**
 - Rollback to use the `Copy to Wishlist` button on D2Gunsmith
 - Updated importing method when bringing in an existing list
